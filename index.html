@@ -1,268 +1,1265 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>研究体験ページ</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ブランチ毎 WL 等化デモ｜サブバンド分割コヒーレント受信</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* ===== 色（好きな色に変えてOK） ===== */
-  :root {
-    --main: #1f6feb;
-    --bg: #f3f5f9;
-    --card: #ffffff;
-    --text: #1d2330;
-    --sub: #5b6475;
-    --line: #e1e5ec;
-    --ok: #1a7f37;
-    --ok-bg: #e6f4ea;
-    --ng: #cf222e;
-    --ng-bg: #fdecec;
+:root{
+  color-scheme: light;
+  --bg:#E3E7EB; --surface:#F4F6F8; --surface-2:#D8DDE2; --line:#C2C9D0;
+  --text:#14191F; --text-2:#525C67;
+  --scope-bg:#0A121C; --scope-grid:rgba(150,185,220,.13); --scope-ideal:rgba(205,222,240,.45); --scope-text:rgba(205,222,240,.62);
+  --acc:#8A6A00; --acc-soft:rgba(245,196,0,.20);
+  --sb1:#2763D6; --sb2:#2A8F57; --bad:#C2321C;
+  --sA:#596B83; --sB:#74609F; --sC:#43807B; --sD:#8A6A00;
+  --pA:#9FB1CA; --pB:#BCA5E3; --pC:#8ED2CB; --pD:#FFCD1F;
+  --map-0:#FFFFFF; --map-1:#F2A58E; --map-2:#A3201A; --map-none:#CDD4DB;
+  --shadow:0 1px 0 rgba(255,255,255,.7) inset, 0 1px 2px rgba(20,30,45,.08);
+  --knob:#FFFFFF;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#11161C; --surface:#19212A; --surface-2:#242D38; --line:#2D3743;
+    --text:#E5EAF0; --text-2:#97A3B0;
+    --scope-bg:#060B12;
+    --acc:#F2C230; --acc-soft:rgba(242,194,48,.16);
+    --sb1:#5E95F2; --sb2:#4EC286; --bad:#FF6B52;
+    --sA:#9BABC2; --sB:#B49FDC; --sC:#8CC6C0; --sD:#F2C230;
+    --map-0:#F1ECE4; --map-1:#F08C73; --map-2:#D42A1E; --map-none:#242D38;
+    --shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 1px 2px rgba(0,0,0,.3);
+    --knob:#2B3541;
   }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.7;
-    -webkit-text-size-adjust: 100%;
-  }
-  header { background: var(--main); color: #fff; padding: 28px 16px 24px; }
-  header .inner, main { max-width: 560px; margin: 0 auto; }
-  header h1 { margin: 0; font-size: 22px; line-height: 1.4; }
-  header p { margin: 6px 0 0; font-size: 14px; opacity: .9; }
-  main { padding: 16px; }
-  .card { background: var(--card); border-radius: 14px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-  .tag { display: inline-block; background: var(--main); color: #fff; font-size: 12px; font-weight: bold; padding: 2px 10px; border-radius: 999px; }
-  h2 { font-size: 18px; margin: 8px 0 4px; }
-  .note { color: var(--sub); font-size: 14px; margin: 0 0 12px; }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#11161C; --surface:#19212A; --surface-2:#242D38; --line:#2D3743;
+  --text:#E5EAF0; --text-2:#97A3B0;
+  --scope-bg:#060B12;
+  --acc:#F2C230; --acc-soft:rgba(242,194,48,.16);
+  --sb1:#5E95F2; --sb2:#4EC286; --bad:#FF6B52;
+  --sA:#9BABC2; --sB:#B49FDC; --sC:#8CC6C0; --sD:#F2C230;
+  --map-0:#F1ECE4; --map-1:#F08C73; --map-2:#D42A1E; --map-none:#242D38;
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 1px 2px rgba(0,0,0,.3);
+  --knob:#2B3541;
+}
+:root{ box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+*,*::before,*::after{ box-sizing:inherit; }
+html{ height:100%; scroll-padding-top:env(safe-area-inset-top,0px); -webkit-text-size-adjust:100%; }
+body{
+  height:100%; margin:0; background:var(--bg); color:var(--text);
+  font-family:"IBM Plex Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",system-ui,sans-serif;
+  font-size:15px; line-height:1.55; font-feature-settings:"palt" 1;
+  -webkit-tap-highlight-color:transparent; overscroll-behavior:none;
+}
+button,input{ font:inherit; color:inherit; }
+.num{ font-variant-numeric:tabular-nums; }
+:focus-visible{ outline:2px solid var(--sb1); outline-offset:2px; }
 
-  /* 体験 */
-  .result { text-align: center; margin: 8px 0 4px; }
-  .result .label { font-size: 14px; color: var(--sub); }
-  .result .value { font-size: 44px; font-weight: bold; color: var(--main); line-height: 1.2; font-variant-numeric: tabular-nums; }
-  .result .value small { font-size: 18px; margin-left: 4px; }
-  .bar { height: 12px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 8px 0 16px; }
-  .bar div { height: 100%; width: 0; background: var(--main); border-radius: 999px; transition: width .15s; }
-  .slider-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--sub); }
-  .slider-row b { color: var(--text); font-size: 16px; }
-  input[type=range] { width: 100%; height: 36px; accent-color: var(--main); margin: 4px 0 12px; }
-  canvas { width: 100%; height: 200px; display: block; }
+.app{
+  height:100%; display:flex; flex-direction:column; gap:10px;
+  padding:10px max(14px,env(safe-area-inset-right,0px)) 12px max(14px,env(safe-area-inset-left,0px));
+}
+/* ---------- header ---------- */
+.top{ display:flex; align-items:center; gap:18px; min-height:48px; }
+.ttl{ flex:1; min-width:0; }
+.ttl h1{ margin:0; font-size:19px; line-height:1.3; font-weight:700; letter-spacing:.01em; }
+.ttl p{ margin:1px 0 0; font-size:12.5px; color:var(--text-2); }
+.tabs{ display:flex; background:var(--surface-2); border-radius:10px; padding:3px; gap:2px; }
+.tabs button{ border:0; background:transparent; padding:7px 18px; border-radius:8px; font-weight:600; font-size:14px; cursor:pointer; color:var(--text-2); }
+.tabs button[aria-selected="true"]{ background:var(--surface); color:var(--text); box-shadow:var(--shadow); }
+.tools{ display:flex; gap:6px; align-items:center; }
+.sim-badge{ font-size:12px; color:var(--text-2); border:1px solid var(--line); border-radius:999px; padding:3px 10px; white-space:nowrap; }
+.ghost{ border:1px solid var(--line); background:var(--surface); border-radius:8px; padding:6px 10px; font-size:12.5px; cursor:pointer; white-space:nowrap; }
 
-  /* クイズ */
-  .q { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
-  .q:first-of-type { margin-top: 8px; padding-top: 0; border-top: none; }
-  .q p { font-weight: bold; margin: 0 0 8px; }
-  .choice { display: block; width: 100%; text-align: left; font: inherit; font-size: 16px; padding: 12px 14px; margin: 6px 0; border: 2px solid var(--line); border-radius: 10px; background: #fff; color: var(--text); cursor: pointer; }
-  .choice:disabled { cursor: default; }
-  .choice.ok { border-color: var(--ok); background: var(--ok-bg); }
-  .choice.ng { border-color: var(--ng); background: var(--ng-bg); }
-  .explain { display: none; font-size: 14px; background: var(--bg); border-radius: 10px; padding: 10px 12px; margin-top: 8px; }
-  .explain.show { display: block; }
-  .score { display: none; text-align: center; font-size: 18px; font-weight: bold; margin-top: 16px; }
-  .score.show { display: block; }
-  footer { text-align: center; font-size: 12px; color: var(--sub); padding: 8px 16px 32px; }
+.view{ flex:1; min-height:0; }
+.view[hidden]{ display:none !important; }
+
+/* ---------- demo layout ---------- */
+.demo{ display:grid; grid-template-columns:minmax(0,1fr) clamp(300px,31vw,390px); grid-template-rows:minmax(0,1fr) 138px; gap:10px; }
+.screens{ grid-column:1; grid-row:1; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:10px; min-height:0; }
+.trace{ grid-column:1; grid-row:2; }
+.panel{ grid-column:2; grid-row:1 / span 2; overflow:auto; min-height:0; display:flex; flex-direction:column; gap:10px; scrollbar-width:thin; }
+
+.card{ background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); }
+.scope{ display:flex; flex-direction:column; padding:9px 11px 10px; min-height:0; min-width:0; }
+.scope.prop{ border-color:var(--acc); box-shadow:0 0 0 1px var(--acc), var(--shadow); }
+.scope-h{ display:flex; align-items:flex-start; gap:9px; }
+.tag{ flex:none; width:26px; height:26px; border-radius:7px; display:grid; place-items:center; font-weight:700; font-size:14px; color:var(--surface); background:var(--c); }
+.nm{ flex:1; min-width:0; line-height:1.25; }
+.nm b{ display:block; font-size:14px; font-weight:600; }
+.nm small{ display:block; font-size:11.5px; color:var(--text-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.nm .prop-l{ font-style:normal; font-weight:700; color:var(--acc); margin-right:6px; }
+.ber{ text-align:right; line-height:1.15; }
+.ber .v{ font-size:21px; font-weight:600; letter-spacing:-.01em; white-space:nowrap; }
+.ber .v.bad{ color:var(--bad); }
+.ber .s{ font-size:11.5px; color:var(--text-2); white-space:nowrap; }
+.meter{ position:relative; height:6px; border-radius:3px; background:var(--surface-2); margin:17px 0 8px; overflow:visible; }
+.meter i{ position:absolute; left:0; top:0; bottom:0; border-radius:3px; background:var(--c); width:0; transition:width .25s linear; }
+.meter b{ position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--text); border-radius:1px; }
+.meter span{ position:absolute; top:-16px; font-size:10px; color:var(--text-2); transform:translateX(-50%); white-space:nowrap; }
+.screen{ position:relative; flex:1; min-height:0; }
+.screen canvas{ position:absolute; border-radius:8px; }
+
+/* ---------- trace ---------- */
+.trace{ display:flex; flex-direction:column; padding:8px 12px 8px; min-height:0; }
+.trace-h{ display:flex; align-items:baseline; gap:14px; }
+.trace-h h2{ margin:0; font-size:13.5px; font-weight:600; }
+.trace-h small{ color:var(--text-2); font-size:11.5px; }
+.legend{ display:flex; gap:12px; margin-left:auto; font-size:12px; color:var(--text-2); }
+.legend span{ display:flex; align-items:center; gap:5px; }
+.legend i{ width:14px; height:3px; border-radius:2px; background:var(--c); }
+.trace-cv{ position:relative; flex:1; min-height:0; }
+.trace-cv canvas{ position:absolute; inset:0; width:100%; height:100%; }
+
+/* ---------- panel ---------- */
+.blk{ padding:11px 13px 12px; }
+.blk-h{ display:flex; align-items:baseline; gap:10px; margin-bottom:6px; }
+.blk-h h2{ margin:0; font-size:14.5px; font-weight:700; }
+.blk-h .note{ font-size:11.5px; color:var(--text-2); margin-left:auto; text-align:right; }
+.hint{ margin-left:auto; font-size:11.5px; color:var(--acc); font-weight:600; opacity:0; transition:opacity .4s; }
+.hint.on{ opacity:1; }
+.padwrap{ display:grid; grid-template-columns:16px auto; grid-template-rows:auto 16px; justify-content:center; column-gap:4px; }
+.pad-y{ writing-mode:vertical-rl; text-orientation:mixed; font-size:11px; color:var(--sb1); text-align:center; font-weight:600; }
+.pad-x{ grid-column:2; font-size:11px; color:var(--sb2); text-align:center; font-weight:600; line-height:16px; }
+#pad{ width:min(100%, 34vh, 300px); aspect-ratio:1; display:block; touch-action:none; cursor:crosshair; border-radius:10px; }
+.sl{ display:grid; grid-template-columns:auto 1fr 64px; align-items:center; column-gap:10px; margin-top:4px; }
+.sl > span{ font-size:12.5px; color:var(--text-2); white-space:nowrap; }
+.sl > span b{ color:var(--k, var(--text)); font-weight:700; }
+.sl output{ text-align:right; font-size:13px; font-weight:600; }
+input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:34px; background:transparent; margin:0; cursor:pointer; }
+input[type=range]::-webkit-slider-runnable-track{ height:6px; border-radius:3px; background:var(--surface-2); }
+input[type=range]::-moz-range-track{ height:6px; border-radius:3px; background:var(--surface-2); }
+input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:26px; height:26px; margin-top:-10px; border-radius:50%; background:var(--knob); border:3px solid var(--k, var(--text)); box-shadow:0 1px 3px rgba(0,0,0,.25); }
+input[type=range]::-moz-range-thumb{ width:20px; height:20px; border-radius:50%; background:var(--knob); border:3px solid var(--k, var(--text)); }
+.btns{ display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.btn{ flex:1 1 auto; border:1px solid var(--line); background:var(--surface-2); border-radius:9px; padding:9px 10px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; min-height:40px; }
+.btn[aria-pressed="true"]{ background:var(--acc-soft); border-color:var(--acc); color:var(--text); }
+.btn:active{ transform:translateY(1px); }
+.maps{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
+.maps figure{ margin:0; }
+.maps canvas{ width:100%; aspect-ratio:1; display:block; border-radius:5px; }
+.maps figcaption{ font-size:11.5px; text-align:center; margin-top:2px; color:var(--c); font-weight:700; }
+.cbar{ display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--text-2); margin-top:6px; }
+.cbar i{ flex:1; height:6px; border-radius:3px; background:linear-gradient(90deg,var(--map-0),var(--map-1),var(--map-2)); }
+.status{ margin:6px 0 0; font-size:11.5px; color:var(--text-2); min-height:1.5em; }
+details.blk summary{ cursor:pointer; font-size:14px; font-weight:700; list-style:none; display:flex; align-items:center; gap:8px; }
+details.blk summary::-webkit-details-marker{ display:none; }
+details.blk summary::before{ content:""; width:7px; height:7px; border-right:2px solid var(--text-2); border-bottom:2px solid var(--text-2); transform:rotate(-45deg); transition:transform .2s; margin-right:2px; }
+details.blk[open] summary::before{ transform:rotate(45deg); }
+.sub-h{ font-size:12px; color:var(--text-2); margin:10px 0 0; font-weight:600; }
+.sw{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:8px; font-size:13px; }
+.sw small{ display:block; color:var(--text-2); font-size:11.5px; }
+.switch{ flex:none; width:48px; height:28px; border-radius:14px; border:1px solid var(--line); background:var(--surface-2); position:relative; cursor:pointer; padding:0; }
+.switch::after{ content:""; position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:var(--knob); box-shadow:0 1px 2px rgba(0,0,0,.3); transition:left .18s; }
+.switch[aria-checked="true"]{ background:var(--sb1); border-color:var(--sb1); }
+.switch[aria-checked="true"]::after{ left:22px; }
+
+/* ---------- how view ---------- */
+.how{ display:grid; grid-template-columns:minmax(0,1fr) clamp(300px,31vw,390px); gap:10px; }
+.how-main{ display:flex; flex-direction:column; padding:12px 14px; min-height:0; }
+.how-top{ display:flex; flex-wrap:wrap; gap:12px 18px; align-items:center; }
+.seg{ display:flex; background:var(--surface-2); border-radius:10px; padding:3px; gap:2px; }
+.seg button{ border:0; background:transparent; padding:8px 14px; border-radius:8px; font-size:13.5px; font-weight:600; cursor:pointer; color:var(--text-2); }
+.seg button[aria-checked="true"]{ background:var(--surface); color:var(--text); box-shadow:var(--shadow); }
+.how-top .sl{ flex:1; min-width:250px; margin:0; }
+.howcv{ position:relative; flex:1; min-height:260px; margin-top:8px; }
+.howcv canvas{ position:absolute; inset:0; width:100%; height:100%; touch-action:none; }
+.how-status{ margin:6px 0 0; font-size:14px; line-height:1.6; max-width:62em; min-height:3.2em; }
+.how-status b.ok{ color:var(--sb2); } .how-status b.ng{ color:var(--bad); }
+.how-side{ overflow:auto; min-height:0; display:flex; flex-direction:column; gap:10px; }
+.how-side section{ padding:12px 14px; }
+.how-side h3{ margin:0 0 4px; font-size:14.5px; font-weight:700; }
+.how-side p{ margin:0; font-size:13px; line-height:1.7; color:var(--text); }
+.how-side .btn{ margin-top:9px; width:100%; }
+.cite{ font-size:11.5px; color:var(--text-2); line-height:1.6; padding:2px 4px 8px; }
+.cite p{ margin:0 0 6px; }
+
+/* ---------- narrow / portrait ---------- */
+@media (max-width: 900px), (orientation: portrait) and (max-width: 1100px){
+  body{ height:auto; }
+  .app{ height:auto; min-height:100%; }
+  .top{ flex-wrap:wrap; gap:8px 14px; }
+  .ttl{ flex-basis:100%; }
+  .demo,.how{ grid-template-columns:1fr; grid-template-rows:auto; }
+  .screens,.trace,.panel{ grid-column:1; grid-row:auto; }
+  .screens{ order:1; } .panel{ order:2; } .trace{ order:3; }
+  .screens{ grid-template-rows:auto auto; }
+  .screen{ flex:none; aspect-ratio:1; }
+  .trace{ height:150px; }
+  .panel{ overflow:visible; }
+  .howcv{ min-height:320px; flex:none; height:52vh; }
+  .how-side{ overflow:visible; }
+}
+@media (max-width: 520px){
+  .ttl h1{ font-size:16.5px; }
+  .screens{ gap:7px; }
+  .scope{ padding:7px 8px 8px; }
+  .ber .v{ font-size:16px; }
+  .nm small{ display:none; }
+  .legend{ display:none; }
+}
+@media (prefers-reduced-motion: reduce){
+  *{ transition:none !important; }
+}
 </style>
 </head>
 <body>
-
-<!-- ===== タイトル（ここを書き換える） ===== -->
-<header>
-  <div class="inner">
-    <h1>距離で変わる電波の強さ</h1>
-    <p>○○研究室　氏名</p>
-  </div>
-</header>
-
-<main>
-  <!-- ===== 体験 1：スライダー ===== -->
-  <section class="card">
-    <span class="tag">体験 1</span>
-    <h2>スライダーを動かしてみよう</h2>
-    <p class="note">スマホと Wi-Fi ルーターの距離を変えると、電波の強さはどう変わるでしょう？</p>
-
-    <div class="result">
-      <div class="label" id="resultLabel"></div>
-      <div class="value"><span id="resultValue">0</span><small id="resultUnit"></small></div>
+<div class="app">
+  <header class="top">
+    <div class="ttl">
+      <h1>IQ スキューに強いサブバンド分割コヒーレント受信</h1>
+      <p>ブランチ毎 WL 等化のリアルタイム・シミュレーション，100 GBaud DP-16QAM，2 サブバンド</p>
     </div>
-    <div class="bar"><div id="resultBar"></div></div>
+    <div class="tabs" role="tablist" aria-label="表示の切り替え">
+      <button role="tab" aria-selected="true" data-view="demo" id="tab-demo">デモ</button>
+      <button role="tab" aria-selected="false" data-view="how" id="tab-how">しくみ</button>
+    </div>
+    <div class="tools">
+      <span class="sim-badge">シミュレーション</span>
+      <button class="ghost" id="themeBtn" title="外観を切り替える">外観：自動</button>
+      <button class="ghost" id="fsBtn" hidden>全画面</button>
+    </div>
+  </header>
 
-    <div class="slider-row"><span id="inputLabel"></span><b id="inputValue"></b></div>
-    <input type="range" id="slider">
+  <!-- ================= DEMO ================= -->
+  <main class="view demo" id="view-demo" role="tabpanel" aria-labelledby="tab-demo">
+    <section class="screens" aria-label="4 方式のコンスタレーション">
+      <article class="card scope" data-s="A" style="--c:var(--sA)">
+        <div class="scope-h"><span class="tag">A</span><div class="nm"><b>再結合後に SL 等化</b><small>2×2 SLF，共役入力なし</small></div><div class="ber"><div class="v num">—</div><div class="s num">—</div></div></div>
+        <div class="meter"><i></i><b></b><span>HD-FEC</span></div>
+        <div class="screen"><canvas class="bg"></canvas><canvas class="fg"></canvas></div>
+      </article>
+      <article class="card scope" data-s="B" style="--c:var(--sB)">
+        <div class="scope-h"><span class="tag">B</span><div class="nm"><b>再結合後に WL 等化</b><small>2×2 WLF，再結合後に共役</small></div><div class="ber"><div class="v num">—</div><div class="s num">—</div></div></div>
+        <div class="meter"><i></i><b></b><span>HD-FEC</span></div>
+        <div class="screen"><canvas class="bg"></canvas><canvas class="fg"></canvas></div>
+      </article>
+      <article class="card scope" data-s="C" style="--c:var(--sC)">
+        <div class="scope-h"><span class="tag">C</span><div class="nm"><b>ブランチ毎に SL 等化</b><small>各ブランチで 2×2 SLF</small></div><div class="ber"><div class="v num">—</div><div class="s num">—</div></div></div>
+        <div class="meter"><i></i><b></b><span>HD-FEC</span></div>
+        <div class="screen"><canvas class="bg"></canvas><canvas class="fg"></canvas></div>
+      </article>
+      <article class="card scope prop" data-s="D" style="--c:var(--sD)">
+        <div class="scope-h"><span class="tag">D</span><div class="nm"><b>ブランチ毎に WL 等化</b><small><em class="prop-l">提案方式</em>各ブランチで WLF</small></div><div class="ber"><div class="v num">—</div><div class="s num">—</div></div></div>
+        <div class="meter"><i></i><b></b><span>HD-FEC</span></div>
+        <div class="screen"><canvas class="bg"></canvas><canvas class="fg"></canvas></div>
+      </article>
+    </section>
 
-    <canvas id="graph"></canvas>
-  </section>
+    <section class="card trace" aria-label="実効 SNR の推移">
+      <div class="trace-h"><h2>実効 SNR の推移</h2><small>直近およそ 12 秒</small>
+        <div class="legend"><span style="--c:var(--sA)"><i></i>A</span><span style="--c:var(--sB)"><i></i>B</span><span style="--c:var(--sC)"><i></i>C</span><span style="--c:var(--sD)"><i></i>D（提案）</span></div>
+      </div>
+      <div class="trace-cv"><canvas id="trace"></canvas></div>
+    </section>
 
-  <!-- ===== 体験 2：クイズ ===== -->
-  <section class="card">
-    <span class="tag">体験 2</span>
-    <h2>クイズに挑戦</h2>
-    <div id="quiz"></div>
-    <div class="score" id="score"></div>
-  </section>
+    <aside class="panel">
+      <section class="card blk">
+        <div class="blk-h"><h2>IQ スキュー</h2><span class="hint" id="idleHint">指でドラッグして動かせます</span></div>
+        <div class="padwrap">
+          <div class="pad-y">サブバンド #1 のスキュー τ₁ [ps]</div>
+          <canvas id="pad" aria-label="τ₁ と τ₂ を同時に動かすパッド"></canvas>
+          <div class="pad-x">サブバンド #2 のスキュー τ₂ [ps]</div>
+        </div>
+        <label class="sl" style="--k:var(--sb1)"><span><b>τ₁</b> #1</span><input type="range" id="tau1" min="-10" max="10" step="0.5" value="0"><output class="num" id="tau1o">0.0 ps</output></label>
+        <label class="sl" style="--k:var(--sb2)"><span><b>τ₂</b> #2</span><input type="range" id="tau2" min="-10" max="10" step="0.5" value="0"><output class="num" id="tau2o">0.0 ps</output></label>
+        <div class="btns">
+          <button class="btn" id="driftBtn" aria-pressed="false">ゆらぎを再現</button>
+          <button class="btn" id="randBtn">ランダムに設定</button>
+          <button class="btn" id="zeroBtn">0 に戻す</button>
+        </div>
+      </section>
 
-  <!-- ===== まとめ（ここを書き換える） ===== -->
-  <section class="card">
-    <span class="tag">まとめ</span>
-    <h2>この研究でわかったこと</h2>
-    <p>ここに研究の要点を 2〜3 行で書きます。詳しくはポスターで説明しているので、気軽に声をかけてください。</p>
-  </section>
-</main>
+      <section class="card blk">
+        <div class="blk-h"><h2>BER マップ</h2><span class="note" id="mapCond">Fig. 3 と同じ軸，±5 ps</span></div>
+        <div class="maps">
+          <figure style="--c:var(--sA)"><canvas data-m="A"></canvas><figcaption>A</figcaption></figure>
+          <figure style="--c:var(--sB)"><canvas data-m="B"></canvas><figcaption>B</figcaption></figure>
+          <figure style="--c:var(--sC)"><canvas data-m="C"></canvas><figcaption>C</figcaption></figure>
+          <figure style="--c:var(--sD)"><canvas data-m="D"></canvas><figcaption>D</figcaption></figure>
+        </div>
+        <div class="cbar"><span>BER 10⁻⁴</span><i></i><span>10⁻¹</span></div>
+        <div class="btns">
+          <button class="btn" id="sweepBtn">Fig. 3 を自動測定</button>
+          <button class="btn" id="clearBtn" style="flex:0 0 auto">消去</button>
+        </div>
+        <p class="status" id="mapStatus">スキューを 1 ps 刻みの点で止めると，その点の BER が記録されます．</p>
+      </section>
 
-<footer>○○学会 ポスター発表</footer>
+      <details class="card blk" id="more">
+        <summary>ほかの不完全性とアブレーション</summary>
+        <p class="sub-h">雑音</p>
+        <label class="sl"><span>OSNR</span><input type="range" id="snr" min="10" max="24" step="0.5" value="17"><output class="num" id="snro">26.0 dB</output></label>
+        <p class="sub-h">IQ 振幅不平衡</p>
+        <label class="sl" style="--k:var(--sb1)"><span><b>#1</b></span><input type="range" id="amp1" min="-2" max="2" step="0.1" value="0"><output class="num" id="amp1o">0.0 dB</output></label>
+        <label class="sl" style="--k:var(--sb2)"><span><b>#2</b></span><input type="range" id="amp2" min="-2" max="2" step="0.1" value="0"><output class="num" id="amp2o">0.0 dB</output></label>
+        <p class="sub-h">IQ 位相誤差（直交からのずれ）</p>
+        <label class="sl" style="--k:var(--sb1)"><span><b>#1</b></span><input type="range" id="ph1" min="-10" max="10" step="0.5" value="0"><output class="num" id="ph1o">0.0°</output></label>
+        <label class="sl" style="--k:var(--sb2)"><span><b>#2</b></span><input type="range" id="ph2" min="-10" max="10" step="0.5" value="0"><output class="num" id="ph2o">0.0°</output></label>
+        <p class="sub-h">偏波とアブレーション</p>
+        <div class="sw"><div>偏波状態を回し続ける<small>偏波分離も同時に追従します</small></div><button class="switch" role="switch" aria-checked="false" id="sopSw" aria-label="偏波状態を回し続ける"></button></div>
+        <div class="sw"><div>共役パスにも CDCF をかける<small>オフにすると提案方式の要素を 1 つ外した状態になります</small></div><button class="switch" role="switch" aria-checked="true" id="cdcfSw" aria-label="共役パスにも CDCF をかける"></button></div>
+        <div class="btns"><button class="btn" id="learnBtn">等化器を初期化して学習を見る</button><button class="btn" id="defBtn" style="flex:0 0 auto">初期設定に戻す</button></div>
+      </details>
+    </aside>
+  </main>
+
+  <!-- ================= HOW ================= -->
+  <main class="view how" id="view-how" role="tabpanel" aria-labelledby="tab-how" hidden>
+    <section class="card how-main">
+      <div class="how-top">
+        <div class="seg" role="radiogroup" aria-label="共役をとる場所">
+          <button role="radio" aria-checked="false" data-m="B">方式 B：再結合後に共役</button>
+          <button role="radio" aria-checked="true" data-m="D">提案 D：ブランチ毎に共役</button>
+        </div>
+        <label class="sl" style="--k:var(--bad)"><span>説明用のスキュー τ</span><input type="range" id="howTau" min="0" max="10" step="0.5" value="5"><output class="num" id="howTauo">5.0 ps</output></label>
+      </div>
+      <div class="howcv"><canvas id="howCv" aria-label="信号成分とイメージの周波数配置"></canvas></div>
+      <p class="how-status" id="howStatus"></p>
+    </section>
+    <aside class="how-side">
+      <section class="card">
+        <h3>折り返しの軸がブランチごとに違う</h3>
+        <p>IQ 不平衡によるイメージは，各ブランチの LO 周波数を軸に折り返されます．再結合した後に共役をとると軸が f₀ になるため，イメージの複製を作れません．そこで再結合の前に，ブランチごとに WL 等化を行います．</p>
+      </section>
+      <section class="card">
+        <h3>共役パスにも同じ CDCF</h3>
+        <p>共役をとると波長分散の位相が反転するため，CDCF 後のイメージには分散が残ります．共役パスにも同じ CDCF をかけると複製にも同じ残留分散が乗り，短いタップ数で打ち消せます．</p>
+        <button class="btn" id="tryAbl">デモでこの処理を外してみる</button>
+      </section>
+      <section class="card">
+        <h3>個別の校正なしで学習</h3>
+        <p>既知シンボルから理想波形を作り，逆キャリア再生，サブバンド分割，LO 周波数ずれ δ<sub>k</sub> を含む周波数シフトで各ブランチの所望信号を生成します．NLMS がスキューと偏波回転をまとめて吸収するので，フロントエンドごとの校正は要りません．</p>
+        <button class="btn" id="tryLearn">デモで学習の様子を見る</button>
+      </section>
+      <div class="cite">
+        <p>K. Hayakawa, T. Sekizuka, T. Kuno, L. Wei, Y. Mori, “Sub-Band-Divided Coherent Reception Without Individual IQ-Skew Calibration via Per-Branch WL Equalization.” 豊田工業大学，名古屋大学</p>
+        <p>このデモの条件：100 GBaud DP-16QAM（ロールオフ 0.1），SMF 500 km の波長分散，ASE 雑音，LO = f₀ ± 25 GHz の 2 サブバンド，フロントエンド帯域 33 GHz，BPF は 2 GHz の cos² 遷移，データ支援 NLMS（25 タップ，2 サンプル/シンボル）．ブラウザで動かすため，レーザ位相雑音は省略し（θ(t) = 0），タップ数を論文の 128 から減らしています．実験結果は論文の Fig. 3 です．</p>
+      </div>
+    </aside>
+  </main>
+</div>
 
 <script>
-// ===== 体験 1 の設定（ここを書き換えると中身が変わります） =====
-const EXPERIMENT = {
-  inputLabel: "距離",
-  inputUnit: "m",
-  min: 1, max: 10, step: 0.5, initial: 1,
-  resultLabel: "電波の強さ（1m のときを 100% とする）",
-  resultUnit: "%",
-  resultMax: 100,                // バーとグラフの最大値
-  model: x => 100 / (x * x),     // 入力 x から結果を計算する式
-};
+function createEngine(){
+  // ---- system constants ----
+  const NS = 1024, SPS = 2, N = NS * SPS;
+  const RS = 100e9, FS = RS * SPS, DF = FS / N;          // 97.65625 MHz/bin
+  const CBIN = [-256, 256];                              // LO offsets ±25 GHz (exact bins)
+  const ALPHA = 0.1;                                     // raised-cosine roll-off
+  const L = 25, HC = (L - 1) >> 1;                       // taps (2 sps)
+  const LAMBDA = 1550e-9, DISP = 17e-6, LEN = 500e3, CL = 299792458;
+  const CDK = Math.PI * LAMBDA * LAMBDA * DISP * LEN / CL; // CD phase = CDK f^2
+  const FE_BW = 33e9, ADC_NYQ = 40e9, WSS_BW = 60e9, XOVER = 2e9;
+  const SQ10 = Math.sqrt(10);
+  const LV = [-3 / SQ10, -1 / SQ10, 1 / SQ10, 3 / SQ10];
+  const GRAY = [0, 1, 3, 2];
+  const POP = [0, 1, 1, 2];
 
-// ===== クイズ（問題を増やすときは { ... } をコピーして追加） =====
-const QUIZ = [
-  {
-    question: "距離が 2 倍になると、電波の強さはどうなる？",
-    choices: ["1/2 になる", "1/4 になる", "変わらない"],
-    answer: 1,   // 正解の番号（0 から数える）
-    explain: "電波の強さは距離の 2 乗に反比例します。2 倍離れると 1/(2×2) = 1/4 です。",
-  },
-  {
-    question: "スマホとルーターの間に人が立つと、電波はどうなる？",
-    choices: ["強くなる", "弱くなる", "変わらない"],
-    answer: 1,
-    explain: "人の体は水分が多く、電波を吸収するので弱くなります。",
-  },
-];
-
-// ===== ここから下は基本的に触らなくてOK =====
-const $ = id => document.getElementById(id);
-
-// --- 体験 1 ---
-const slider = $("slider");
-slider.min = EXPERIMENT.min;
-slider.max = EXPERIMENT.max;
-slider.step = EXPERIMENT.step;
-slider.value = EXPERIMENT.initial;
-$("inputLabel").textContent = EXPERIMENT.inputLabel;
-$("resultLabel").textContent = EXPERIMENT.resultLabel;
-$("resultUnit").textContent = EXPERIMENT.resultUnit;
-
-function format(v) {
-  return v >= 10 ? v.toFixed(0) : v.toFixed(1);
-}
-
-function update() {
-  const x = Number(slider.value);
-  const y = EXPERIMENT.model(x);
-  $("inputValue").textContent = x + " " + EXPERIMENT.inputUnit;
-  $("resultValue").textContent = format(y);
-  $("resultBar").style.width = Math.min(100, y / EXPERIMENT.resultMax * 100) + "%";
-  drawGraph(x);
-}
-
-const canvas = $("graph");
-const ctx = canvas.getContext("2d");
-
-function drawGraph(current) {
-  const dpr = window.devicePixelRatio || 1;
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, w, h);
-
-  const { min, max, resultMax, model, inputUnit } = EXPERIMENT;
-  const pad = { l: 36, r: 12, t: 12, b: 28 };
-  const px = x => pad.l + (x - min) / (max - min) * (w - pad.l - pad.r);
-  const py = y => h - pad.b - Math.min(y, resultMax) / resultMax * (h - pad.t - pad.b);
-  const css = getComputedStyle(document.documentElement);
-  const mainColor = css.getPropertyValue("--main").trim();
-
-  // 軸
-  ctx.strokeStyle = css.getPropertyValue("--line").trim();
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(pad.l, pad.t);
-  ctx.lineTo(pad.l, h - pad.b);
-  ctx.lineTo(w - pad.r, h - pad.b);
-  ctx.stroke();
-
-  // 目盛りの文字
-  ctx.fillStyle = css.getPropertyValue("--sub").trim();
-  ctx.font = "12px sans-serif";
-  ctx.textAlign = "left";
-  ctx.fillText(min + inputUnit, pad.l, h - 8);
-  ctx.textAlign = "right";
-  ctx.fillText(max + inputUnit, w - pad.r, h - 8);
-  ctx.fillText(resultMax, pad.l - 6, pad.t + 10);
-  ctx.fillText(0, pad.l - 6, h - pad.b);
-
-  // 曲線
-  ctx.strokeStyle = mainColor;
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  for (let i = 0; i <= 100; i++) {
-    const x = min + (max - min) * i / 100;
-    if (i === 0) ctx.moveTo(px(x), py(model(x)));
-    else ctx.lineTo(px(x), py(model(x)));
-  }
-  ctx.stroke();
-
-  // 今の位置
-  ctx.fillStyle = mainColor;
-  ctx.beginPath();
-  ctx.arc(px(current), py(model(current)), 7, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-slider.addEventListener("input", update);
-window.addEventListener("resize", update);
-update();
-
-// --- 体験 2：クイズ ---
-let answered = 0, correct = 0;
-
-QUIZ.forEach((item, qi) => {
-  const box = document.createElement("div");
-  box.className = "q";
-
-  const p = document.createElement("p");
-  p.textContent = "Q" + (qi + 1) + ". " + item.question;
-  box.appendChild(p);
-
-  const explain = document.createElement("div");
-  explain.className = "explain";
-
-  const buttons = item.choices.map((text, ci) => {
-    const b = document.createElement("button");
-    b.className = "choice";
-    b.textContent = text;
-    b.addEventListener("click", () => {
-      buttons.forEach(btn => btn.disabled = true);
-      buttons[item.answer].classList.add("ok");
-      if (ci === item.answer) correct++;
-      else b.classList.add("ng");
-      explain.textContent = (ci === item.answer ? "正解！ " : "残念… ") + item.explain;
-      explain.classList.add("show");
-
-      answered++;
-      if (answered === QUIZ.length) {
-        $("score").textContent = QUIZ.length + " 問中 " + correct + " 問正解！";
-        $("score").classList.add("show");
+  // ---- FFT ----
+  const LOG2N = Math.round(Math.log2(N));
+  const REV = new Uint32Array(N);
+  for (let i = 0; i < N; i++) { let r = 0, x = i; for (let b = 0; b < LOG2N; b++) { r = (r << 1) | (x & 1); x >>= 1; } REV[i] = r; }
+  const COS = new Float64Array(N / 2), SIN = new Float64Array(N / 2);
+  for (let i = 0; i < N / 2; i++) { COS[i] = Math.cos(2 * Math.PI * i / N); SIN[i] = Math.sin(2 * Math.PI * i / N); }
+  function fft(re, im, inv) {
+    for (let i = 0; i < N; i++) { const j = REV[i]; if (j > i) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; } }
+    for (let size = 2; size <= N; size <<= 1) {
+      const half = size >> 1, step = N / size;
+      for (let i = 0; i < N; i += size) {
+        for (let j = 0, k = 0; j < half; j++, k += step) {
+          const wr = COS[k], wi = inv ? SIN[k] : -SIN[k];
+          const a = i + j, b = a + half;
+          const tr = re[b] * wr - im[b] * wi, ti = re[b] * wi + im[b] * wr;
+          re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        }
       }
-    });
-    box.appendChild(b);
-    return b;
+    }
+    if (inv) { const s = 1 / N; for (let i = 0; i < N; i++) { re[i] *= s; im[i] *= s; } }
+  }
+  const sgn = k => (k < N / 2 ? k : k - N);
+  const wrap = m => ((m % N) + N) % N;
+  const F64 = () => new Float64Array(N);
+  const cpx = () => ({ re: F64(), im: F64() });
+
+  // ---- static filters ----
+  const FB = F64(); for (let k = 0; k < N; k++) FB[k] = sgn(k) * DF;
+  const HTX = F64();
+  for (let k = 0; k < N; k++) {
+    const f = Math.abs(FB[k]), f1 = (1 - ALPHA) * RS / 2, f2 = (1 + ALPHA) * RS / 2;
+    let h = 0; if (f <= f1) h = 1; else if (f < f2) h = 0.5 * (1 + Math.cos(Math.PI / (ALPHA * RS) * (f - f1)));
+    HTX[k] = 2 * h;
+  }
+  const HCD = cpx();
+  for (let k = 0; k < N; k++) { const p = -CDK * FB[k] * FB[k]; HCD.re[k] = Math.cos(p); HCD.im[k] = Math.sin(p); }
+  const HFE = F64();
+  for (let k = 0; k < N; k++) { const f = Math.abs(FB[k]); HFE[k] = f >= ADC_NYQ ? 0 : 1 / Math.sqrt(1 + Math.pow(f / FE_BW, 8)); }
+  const INWSS = new Uint8Array(N); for (let k = 0; k < N; k++) INWSS[k] = Math.abs(FB[k]) <= WSS_BW ? 1 : 0;
+  // per-branch CDCF / BPF / rotation (branch baseband coordinate m; optical f = (m + c) DF)
+  const BR = CBIN.map((c, b) => {
+    const cd = cpx(), bpf = F64(), rot = cpx(), src = new Int32Array(N);
+    for (let k = 0; k < N; k++) {
+      const m = sgn(k), fo = (m + c) * DF;
+      const p = CDK * fo * fo; cd.re[k] = Math.cos(p); cd.im[k] = Math.sin(p);
+      const u = Math.min(1, Math.max(0, (fo + XOVER / 2) / XOVER));
+      const lo = Math.cos(Math.PI * u / 2) ** 2;
+      bpf[k] = b === 0 ? lo : 1 - lo;
+      const s = m + c; src[k] = (s >= -N / 2 && s < N / 2) ? wrap(s) : -1;
+    }
+    for (let n = 0; n < N; n++) { const p = 2 * Math.PI * c * n / N; rot.re[n] = Math.cos(p); rot.im[n] = Math.sin(p); }
+    return { c, cd, bpf, rot, src };
   });
 
-  box.appendChild(explain);
-  $("quiz").appendChild(box);
+  // ---- RNG ----
+  let seed = 0x9e3779b9 >>> 0;
+  function rnd() { seed ^= seed << 13; seed >>>= 0; seed ^= seed >>> 17; seed ^= seed << 5; seed >>>= 0; return seed / 4294967296; }
+  let gSpare = null;
+  function gauss() {
+    if (gSpare !== null) { const g = gSpare; gSpare = null; return g; }
+    let u = 0; while (u < 1e-12) u = rnd();
+    const v = rnd(), r = Math.sqrt(-2 * Math.log(u));
+    gSpare = r * Math.sin(2 * Math.PI * v); return r * Math.cos(2 * Math.PI * v);
+  }
+
+  // ---- buffers ----
+  const sym = { xi: new Uint8Array(NS), xq: new Uint8Array(NS), yi: new Uint8Array(NS), yq: new Uint8Array(NS) };
+  const TX = [cpx(), cpx()], DT = [cpx(), cpx()], RX = [cpx(), cpx()];
+  const tmp = cpx(), tmp2 = cpx();
+  const BIN = [0, 1].map(() => ({ d: [cpx(), cpx()], c: [cpx(), cpx()], des: [cpx(), cpx()] }));
+  const REC = [cpx(), cpx()];
+  const ext = () => ({ re: new Float64Array(N + L - 1), im: new Float64Array(N + L - 1) });
+
+  function makeEq(nIn, xIdx, yIdx) {
+    const w = { xr: new Float64Array(nIn * L), xi: new Float64Array(nIn * L), yr: new Float64Array(nIn * L), yi: new Float64Array(nIn * L), nIn, xIdx, yIdx };
+    w.reset = () => { w.xr.fill(0); w.xi.fill(0); w.yr.fill(0); w.yi.fill(0); w.xr[xIdx * L + HC] = 1; w.yr[yIdx * L + HC] = 1; };
+    w.reset(); w.ins = []; for (let i = 0; i < nIn; i++) w.ins.push(ext()); w.ox = cpx(); w.oy = cpx();
+    return w;
+  }
+  // Schemes: A post-rec SL, B post-rec WL, C per-branch SL, D per-branch WL
+  const EQ = {
+    A: [makeEq(2, 0, 1)],
+    B: [makeEq(4, 0, 2)],
+    C: [makeEq(2, 0, 1), makeEq(2, 0, 1)],
+    D: [makeEq(4, 0, 2), makeEq(4, 0, 2)]
+  };
+  const SCHEMES = ['A', 'B', 'C', 'D'];
+
+  function fillExt(e, src, conj) {
+    const sr = src.re, si = src.im, er = e.re, ei = e.im, s = conj ? -1 : 1;
+    for (let j = 0; j < N + L - 1; j++) { const k = (j - HC + N) % N; er[j] = sr[k]; ei[j] = s * si[k]; }
+  }
+
+  function runEq(w, dX, dY, mu) {
+    const nIn = w.nIn, ins = w.ins, xr = w.xr, xi = w.xi, yr = w.yr, yi = w.yi;
+    const oxr = w.ox.re, oxi = w.ox.im, oyr = w.oy.re, oyi = w.oy.im;
+    const dxr = dX.re, dxi = dX.im, dyr = dY.re, dyi = dY.im;
+    for (let n = 0; n < N; n++) {
+      let axr = 0, axi = 0, ayr = 0, ayi = 0, en = 1e-9;
+      for (let i = 0; i < nIn; i++) {
+        const er = ins[i].re, ei = ins[i].im, b = i * L;
+        for (let l = 0; l < L; l++) {
+          const ur = er[n + l], ui = ei[n + l], q = b + l;
+          const a1 = xr[q], a2 = xi[q], b1 = yr[q], b2 = yi[q];
+          axr += a1 * ur - a2 * ui; axi += a1 * ui + a2 * ur;
+          ayr += b1 * ur - b2 * ui; ayi += b1 * ui + b2 * ur;
+          en += ur * ur + ui * ui;
+        }
+      }
+      oxr[n] = axr; oxi[n] = axi; oyr[n] = ayr; oyi[n] = ayi;
+      if (mu > 0) {
+        const g = mu / en;
+        const exr = (dxr[n] - axr) * g, exi = (dxi[n] - axi) * g, eyr = (dyr[n] - ayr) * g, eyi = (dyi[n] - ayi) * g;
+        for (let i = 0; i < nIn; i++) {
+          const er = ins[i].re, ei = ins[i].im, b = i * L;
+          for (let l = 0; l < L; l++) {
+            const ur = er[n + l], ui = ei[n + l], q = b + l;
+            xr[q] += exr * ur + exi * ui; xi[q] += exi * ur - exr * ui;
+            yr[q] += eyr * ur + eyi * ui; yi[q] += eyi * ur - eyr * ui;
+          }
+        }
+      }
+    }
+  }
+
+  // ---- state ----
+  const P = { tau1: 0, tau2: 0, amp1: 0, amp2: 0, ph1: 0, ph2: 0, snrDb: 17, sopRot: false, conjCDCF: true, mu: 0.03 };
+  let sopT = 0.62, sopP = 0.35;
+  function setParams(p) { for (const k in p) if (k in P) P[k] = p[k]; }
+  function resetEq() { for (const s of SCHEMES) for (const w of EQ[s]) w.reset(); }
+
+  function decide(v) { const t = v * SQ10; return t < -2 ? 0 : t < 0 ? 1 : t < 2 ? 2 : 3; }
+
+  function step() {
+    // 1) symbols & transmitter
+    const S = [[sym.xi, sym.xq], [sym.yi, sym.yq]];
+    for (let p = 0; p < 2; p++) {
+      const [ai, aq] = S[p]; const t = TX[p];
+      t.re.fill(0); t.im.fill(0);
+      for (let m = 0; m < NS; m++) { ai[m] = (rnd() * 4) | 0; aq[m] = (rnd() * 4) | 0; t.re[2 * m] = LV[ai[m]]; t.im[2 * m] = LV[aq[m]]; }
+      fft(t.re, t.im, false);
+      for (let k = 0; k < N; k++) { t.re[k] *= HTX[k]; t.im[k] *= HTX[k]; }
+      DT[p].re.set(t.re); DT[p].im.set(t.im); fft(DT[p].re, DT[p].im, true); // ideal full-band waveform
+    }
+    // 2) channel: SOP + CD + ASE
+    if (P.sopRot) { sopT += 0.012; sopP += 0.009; }
+    const c = Math.cos(sopT), s = Math.sin(sopT), cp = Math.cos(sopP), sp = Math.sin(sopP);
+    // J = [[c e^{jp}, -s],[s, c e^{-jp}]]
+    const snr = Math.pow(10, P.snrDb / 10), sd = Math.sqrt(N / snr);
+    for (let k = 0; k < N; k++) {
+      const xr = TX[0].re[k], xi = TX[0].im[k], yr = TX[1].re[k], yi = TX[1].im[k];
+      let rxr = c * (cp * xr - sp * xi) - s * yr, rxi = c * (cp * xi + sp * xr) - s * yi;
+      let ryr = s * xr + c * (cp * yr + sp * yi), ryi = s * xi + c * (cp * yi - sp * yr);
+      const hr = HCD.re[k], hi = HCD.im[k];
+      let t1 = rxr * hr - rxi * hi, t2 = rxr * hi + rxi * hr; rxr = t1; rxi = t2;
+      t1 = ryr * hr - ryi * hi; t2 = ryr * hi + ryi * hr; ryr = t1; ryi = t2;
+      if (INWSS[k]) { rxr += sd * gauss(); rxi += sd * gauss(); ryr += sd * gauss(); ryi += sd * gauss(); }
+      RX[0].re[k] = rxr; RX[0].im[k] = rxi; RX[1].re[k] = ryr; RX[1].im[k] = ryi;
+    }
+    // 3) receiver branches
+    const tau = [P.tau1 * 1e-12, P.tau2 * 1e-12];
+    const gain = [Math.pow(10, P.amp1 / 20), Math.pow(10, P.amp2 / 20)];
+    const phi = [P.ph1 * Math.PI / 180, P.ph2 * Math.PI / 180];
+    for (let b = 0; b < 2; b++) {
+      const br = BR[b], bn = BIN[b];
+      const cph = Math.cos(phi[b]), sph = Math.sin(phi[b]), g = gain[b];
+      for (let p = 0; p < 2; p++) {
+        // frontend: shift to branch baseband + LPF
+        const R = RX[p], X = tmp;
+        for (let k = 0; k < N; k++) { const q = br.src[k]; if (q < 0) { X.re[k] = 0; X.im[k] = 0; } else { X.re[k] = R.re[q] * HFE[k]; X.im[k] = R.im[q] * HFE[k]; } }
+        // IQ imbalance: Q' = g (Q cos phi + I sin phi) delayed by tau  (frequency domain)
+        const Y = tmp2;
+        for (let k = 0; k < N; k++) {
+          const km = wrap(-sgn(k));
+          const ar = X.re[k], ai = X.im[k], br_ = X.re[km], bi = -X.im[km]; // X(f), conj X(-f)
+          const Ir = (ar + br_) / 2, Ii = (ai + bi) / 2;
+          // Q = -j (X - Xm)/2
+          const Qr = (ai - bi) / 2, Qi = -(ar - br_) / 2;
+          let qr = g * (Qr * cph + Ir * sph), qi = g * (Qi * cph + Ii * sph);
+          const ph = -2 * Math.PI * FB[k] * tau[b], dr = Math.cos(ph), di = Math.sin(ph);
+          const t1 = qr * dr - qi * di, t2 = qr * di + qi * dr; qr = t1; qi = t2;
+          Y.re[k] = Ir - qi; Y.im[k] = Ii + qr; // I + j Q'
+        }
+        // DSP: direct & conjugate paths with CDCF + BPF
+        const Dd = bn.d[p], Cc = bn.c[p];
+        for (let k = 0; k < N; k++) {
+          const km = wrap(-sgn(k));
+          const hr = br.cd.re[k], hi = br.cd.im[k], w = br.bpf[k];
+          Dd.re[k] = (Y.re[k] * hr - Y.im[k] * hi) * w; Dd.im[k] = (Y.re[k] * hi + Y.im[k] * hr) * w;
+          if (P.conjCDCF) {
+            const zr = Y.re[km], zi = -Y.im[km];
+            Cc.re[k] = (zr * hr - zi * hi) * w; Cc.im[k] = (zr * hi + zi * hr) * w;
+          } else { // conjugate taken after CDCF (ablation)
+            const h2r = br.cd.re[km], h2i = br.cd.im[km];
+            const vr = Y.re[km] * h2r - Y.im[km] * h2i, vi = Y.re[km] * h2i + Y.im[km] * h2r;
+            Cc.re[k] = vr * w; Cc.im[k] = -vi * w;
+          }
+        }
+        fft(Dd.re, Dd.im, true); fft(Cc.re, Cc.im, true);
+        // per-branch desired signal (theta = 0 : no laser phase noise in this demo)
+        const De = bn.des[p], T = TX[p];
+        for (let k = 0; k < N; k++) { const q = br.src[k]; if (q < 0) { De.re[k] = 0; De.im[k] = 0; } else { De.re[k] = T.re[q] * br.bpf[k]; De.im[k] = T.im[q] * br.bpf[k]; } }
+        fft(De.re, De.im, true);
+      }
+    }
+    // 4) post-recombination signals (direct paths only)
+    for (let p = 0; p < 2; p++) {
+      const o = REC[p]; o.re.fill(0); o.im.fill(0);
+      for (let b = 0; b < 2; b++) {
+        const d = BIN[b].d[p], r = BR[b].rot;
+        for (let n = 0; n < N; n++) { o.re[n] += d.re[n] * r.re[n] - d.im[n] * r.im[n]; o.im[n] += d.re[n] * r.im[n] + d.im[n] * r.re[n]; }
+      }
+    }
+    const mu = P.mu;
+    // A
+    { const w = EQ.A[0]; fillExt(w.ins[0], REC[0]); fillExt(w.ins[1], REC[1]); runEq(w, DT[0], DT[1], mu); }
+    // B
+    { const w = EQ.B[0]; fillExt(w.ins[0], REC[0]); fillExt(w.ins[1], REC[0], true); fillExt(w.ins[2], REC[1]); fillExt(w.ins[3], REC[1], true); runEq(w, DT[0], DT[1], mu); }
+    // C, D
+    for (let b = 0; b < 2; b++) {
+      const bn = BIN[b];
+      const wc = EQ.C[b]; fillExt(wc.ins[0], bn.d[0]); fillExt(wc.ins[1], bn.d[1]); runEq(wc, bn.des[0], bn.des[1], mu);
+      const wd = EQ.D[b]; fillExt(wd.ins[0], bn.d[0]); fillExt(wd.ins[1], bn.c[0]); fillExt(wd.ins[2], bn.d[1]); fillExt(wd.ins[3], bn.c[1]); runEq(wd, bn.des[0], bn.des[1], mu);
+    }
+    // 5) recombine per-branch outputs and evaluate
+    const res = {};
+    for (const sc of SCHEMES) {
+      let ox, oy;
+      if (sc === 'A' || sc === 'B') { ox = EQ[sc][0].ox; oy = EQ[sc][0].oy; }
+      else {
+        ox = { re: new Float64Array(N), im: new Float64Array(N) }; oy = { re: new Float64Array(N), im: new Float64Array(N) };
+        for (let b = 0; b < 2; b++) {
+          const w = EQ[sc][b], r = BR[b].rot;
+          for (let n = 0; n < N; n++) {
+            ox.re[n] += w.ox.re[n] * r.re[n] - w.ox.im[n] * r.im[n]; ox.im[n] += w.ox.re[n] * r.im[n] + w.ox.im[n] * r.re[n];
+            oy.re[n] += w.oy.re[n] * r.re[n] - w.oy.im[n] * r.im[n]; oy.im[n] += w.oy.re[n] * r.im[n] + w.oy.im[n] * r.re[n];
+          }
+        }
+      }
+      let err = 0, se = 0; const pts = new Float32Array(2 * NS);
+      for (let m = 0; m < NS; m++) {
+        const n = 2 * m;
+        const vxr = ox.re[n], vxi = ox.im[n], vyr = oy.re[n], vyi = oy.im[n];
+        pts[2 * m] = vxr; pts[2 * m + 1] = vxi;
+        const a = [decide(vxr), decide(vxi), decide(vyr), decide(vyi)];
+        const t = [sym.xi[m], sym.xq[m], sym.yi[m], sym.yq[m]];
+        for (let j = 0; j < 4; j++) err += POP[GRAY[a[j]] ^ GRAY[t[j]]];
+        const exr = vxr - LV[t[0]], exi = vxi - LV[t[1]], eyr = vyr - LV[t[2]], eyi = vyi - LV[t[3]];
+        se += exr * exr + exi * exi + eyr * eyr + eyi * eyi;
+      }
+      res[sc] = { err, bits: NS * 8, mse: se / (2 * NS), pts };
+    }
+    return res;
+  }
+  return { step, setParams, resetEq, P, NS, L, consts: { RS, DF, CBIN, LEN, FE_BW } };
+}
+
+
+
+(function(){
+'use strict';
+const SCH = ['A','B','C','D'];
+const FEC = 3.8e-3;
+const RANGE = 1.32;          // constellation half-width
+const TRACE_LEN = 240;
+const BER_WIN = 8;           // blocks in BER window
+const DEF = { tau1:0, tau2:0, amp1:0, amp2:0, ph1:0, ph2:0, snrDb:17, sopRot:false, conjCDCF:true, mu:0.03 };
+const st = Object.assign({}, DEF);
+const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+/* ---------- tokens ---------- */
+let T = {};
+function readTokens(){
+  const cs = getComputedStyle(document.documentElement);
+  const g = n => cs.getPropertyValue(n).trim();
+  T = { bg:g('--bg'), surface:g('--surface'), surface2:g('--surface-2'), line:g('--line'), text:g('--text'), text2:g('--text-2'),
+    scopeBg:g('--scope-bg'), scopeGrid:g('--scope-grid'), scopeIdeal:g('--scope-ideal'), scopeText:g('--scope-text'),
+    acc:g('--acc'), sb1:g('--sb1'), sb2:g('--sb2'), bad:g('--bad'),
+    s:{A:g('--sA'),B:g('--sB'),C:g('--sC'),D:g('--sD')}, p:{A:g('--pA'),B:g('--pB'),C:g('--pC'),D:g('--pD')},
+    map:[g('--map-0'),g('--map-1'),g('--map-2')], mapNone:g('--map-none') };
+}
+readTokens();
+
+/* ---------- theme ---------- */
+const THEMES = ['auto','dark','light'], THEME_L = {auto:'自動', dark:'ダーク', light:'ライト'};
+let theme = 'auto';
+try { theme = localStorage.getItem('wl-demo-theme') || 'auto'; } catch(e){}
+function applyTheme(){
+  if (theme === 'auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', theme);
+  $('#themeBtn').textContent = '外観：' + THEME_L[theme];
+  readTokens(); redrawAllStatic();
+}
+$('#themeBtn').addEventListener('click', () => {
+  theme = THEMES[(THEMES.indexOf(theme) + 1) % 3];
+  try { localStorage.setItem('wl-demo-theme', theme); } catch(e){}
+  applyTheme();
 });
+if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readTokens(); redrawAllStatic(); });
+
+/* ---------- fullscreen & wake lock ---------- */
+const de = document.documentElement;
+const reqFS = de.requestFullscreen || de.webkitRequestFullscreen;
+if (reqFS && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
+  const b = $('#fsBtn'); b.hidden = false;
+  b.addEventListener('click', () => {
+    const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+    try {
+      if (fsEl) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      else reqFS.call(de);
+    } catch(e){}
+  });
+}
+let wake = null;
+async function keepAwake(){
+  try { if ('wakeLock' in navigator && !wake && !document.hidden) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); } } catch(e){}
+}
+
+/* ---------- helpers ---------- */
+const SUP = {'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+function sci(v){
+  if (!(v > 0)) return '0';
+  let e = Math.floor(Math.log10(v)), m = v / Math.pow(10, e);
+  if (m >= 9.95) { m = 1; e += 1; }
+  return m.toFixed(1) + '×10' + String(e).split('').map(c => SUP[c]).join('');
+}
+const fmtPs = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1) + ' ps';
+const fmtSigned = (v, d, u) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d) + u;
+function hexToRgb(h){
+  h = h.replace('#','');
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function mapColor(t){ // t: 0 good .. 1 bad
+  t = Math.max(0, Math.min(1, t));
+  const c = T.map.map(hexToRgb);
+  const [a, b, u] = t < 0.5 ? [c[0], c[1], t * 2] : [c[1], c[2], (t - 0.5) * 2];
+  return 'rgb(' + a.map((x, i) => Math.round(x + (b[i] - x) * u)).join(',') + ')';
+}
+function sizeCanvas(cv, w, h){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  const W = Math.max(1, Math.round(w * dpr)), H = Math.max(1, Math.round(h * dpr));
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  cv.style.width = w + 'px'; cv.style.height = h + 'px';
+  return dpr;
+}
+
+/* ---------- simulation driver (worker with main-thread fallback) ---------- */
+function workerMain(){
+  const E = createEngine();
+  self.onmessage = e => {
+    const m = e.data;
+    if (m.p) E.setParams(m.p);
+    if (m.reset) E.resetEq();
+    const r = E.step(), tr = [];
+    for (const s in r) tr.push(r[s].pts.buffer);
+    self.postMessage({ r, p: Object.assign({}, E.P) }, tr);
+  };
+}
+let worker = null, engine = null, pending = false, lastReq = 0, gotFirst = false, resetFlag = false;
+function useFallback(){
+  if (engine) return;
+  if (worker) { try { worker.terminate(); } catch(e){} worker = null; }
+  engine = createEngine();
+  pending = false; pump();
+}
+function initSim(){
+  try {
+    const src = createEngine.toString() + '\n(' + workerMain.toString() + ')();';
+    const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+    worker = new Worker(url);
+    worker.onmessage = e => { gotFirst = true; onResult(e.data); };
+    worker.onerror = ev => { if (ev && ev.preventDefault) ev.preventDefault(); useFallback(); };
+    setTimeout(() => { if (!gotFirst) useFallback(); }, 2500);
+  } catch(e) { useFallback(); }
+  pump();
+}
+function pump(){
+  if (pending || document.hidden) return;
+  const now = performance.now(), wait = 50 - (now - lastReq);
+  if (wait > 0) { setTimeout(pump, wait); return; }
+  lastReq = now; pending = true;
+  const msg = { p: Object.assign({}, st), reset: resetFlag }; resetFlag = false;
+  if (engine) {
+    setTimeout(() => {
+      engine.setParams(msg.p); if (msg.reset) engine.resetEq();
+      const r = engine.step(); onResult({ r, p: Object.assign({}, engine.P) });
+    }, 0);
+  } else if (worker) worker.postMessage(msg);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { pending = false; pump(); keepAwake(); } });
+
+/* ---------- metrics & data ---------- */
+const hist = {}; SCH.forEach(s => hist[s] = []);
+const trace = {}; SCH.forEach(s => trace[s] = []);
+const latest = {}; let newData = false, blockCount = 0, holdOff = 0, slowLearn = 0;
+const recent = []; // last echoed taus
+function condKey(p){ return [p.snrDb, p.amp1, p.amp2, p.ph1, p.ph2, p.sopRot ? 1 : 0, p.conjCDCF ? 1 : 0].join('|'); }
+const maps = new Map();
+function getMap(k){
+  if (!maps.has(k)) { const o = {}; SCH.forEach(s => o[s] = { err: new Float64Array(121), bits: new Float64Array(121) }); maps.set(k, o); }
+  return maps.get(k);
+}
+let mapsDirty = true;
+
+function onResult(d){
+  pending = false; blockCount++;
+  const r = d.r, p = d.p;
+  for (const s of SCH) {
+    const h = hist[s]; h.push({ err: r[s].err, bits: r[s].bits, mse: r[s].mse }); if (h.length > BER_WIN) h.shift();
+    const t = trace[s]; t.push(-10 * Math.log10(Math.max(r[s].mse, 1e-6))); if (t.length > TRACE_LEN) t.shift();
+    latest[s] = r[s].pts;
+  }
+  newData = true;
+  // slow-learn schedule
+  if (slowLearn > 0) { slowLearn--; if (slowLearn === 0) { st.mu = DEF.mu; } }
+  if (holdOff > 0) holdOff--;
+  // BER map recording
+  recent.push([p.tau1, p.tau2]); if (recent.length > 3) recent.shift();
+  if (holdOff === 0 && recent.length === 3) {
+    const [a, b, c] = recent;
+    const stable = Math.max(Math.abs(a[0] - c[0]), Math.abs(a[1] - c[1]), Math.abs(b[0] - c[0]), Math.abs(b[1] - c[1])) < 0.12;
+    const r1 = Math.round(c[0]), r2 = Math.round(c[1]);
+    if (stable && Math.abs(c[0] - r1) <= 0.25 && Math.abs(c[1] - r2) <= 0.25 && Math.abs(r1) <= 5 && Math.abs(r2) <= 5) {
+      const m = getMap(condKey(p)), i = (5 - r1) * 11 + (r2 + 5);
+      for (const s of SCH) { m[s].err[i] += r[s].err; m[s].bits[i] += r[s].bits; }
+      mapsDirty = true;
+    }
+  }
+  if (sweep) sweepTick(p);
+  pump();
+}
+
+/* ---------- scopes ---------- */
+const scopes = {};
+$$('.scope').forEach(el => {
+  const s = el.dataset.s;
+  scopes[s] = { el, scr: el.querySelector('.screen'), bg: el.querySelector('canvas.bg'), fg: el.querySelector('canvas.fg'),
+    v: el.querySelector('.ber .v'), sn: el.querySelector('.ber .s'), fill: el.querySelector('.meter i'), fec: el.querySelector('.meter b'), fecL: el.querySelector('.meter span'), size: 0, dpr: 1 };
+});
+const meterPos = ber => Math.max(0, Math.min(1, (Math.log10(Math.max(ber, 1e-6)) + 5) / 4.3)); // 1e-5 .. 2e-1
+SCH.forEach(s => { const sc = scopes[s], x = meterPos(FEC) * 100; sc.fec.style.left = x + '%'; sc.fecL.style.left = x + '%'; });
+function layoutScope(s){
+  const sc = scopes[s], r = sc.scr.getBoundingClientRect();
+  const size = Math.floor(Math.max(40, Math.min(r.width, r.height)));
+  const left = Math.floor((r.width - size) / 2), top = Math.floor((r.height - size) / 2);
+  for (const cv of [sc.bg, sc.fg]) { sc.dpr = sizeCanvas(cv, size, size); cv.style.left = left + 'px'; cv.style.top = top + 'px'; }
+  sc.size = size; drawScopeBg(s);
+}
+const LV = [-3, -1, 1, 3].map(v => v / Math.sqrt(10));
+function drawScopeBg(s){
+  const sc = scopes[s], ctx = sc.bg.getContext('2d'), S = sc.bg.width, k = S / (2 * RANGE), d = sc.dpr;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle = T.scopeBg; ctx.fillRect(0, 0, S, S);
+  ctx.strokeStyle = T.scopeGrid; ctx.lineWidth = 1 * d;
+  ctx.setLineDash([3 * d, 4 * d]);
+  for (const v of [-2 / Math.sqrt(10), 2 / Math.sqrt(10)]) {
+    const x = (v + RANGE) * k; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, S); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, x); ctx.lineTo(S, x); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  const c = RANGE * k; ctx.beginPath(); ctx.moveTo(c, 0); ctx.lineTo(c, S); ctx.moveTo(0, c); ctx.lineTo(S, c); ctx.stroke();
+  ctx.strokeStyle = T.scopeIdeal; ctx.lineWidth = 1 * d;
+  for (const a of LV) for (const b of LV) { const x = (a + RANGE) * k, y = (RANGE - b) * k; ctx.beginPath(); ctx.arc(x, y, 3.2 * d, 0, 7); ctx.stroke(); }
+  ctx.fillStyle = T.scopeText; ctx.font = `${11 * d}px "IBM Plex Sans JP", "Hiragino Sans", sans-serif`;
+  ctx.fillText('X 偏波', 8 * d, S - 8 * d);
+  const fg = sc.fg.getContext('2d'); fg.setTransform(1,0,0,1,0,0); fg.clearRect(0, 0, S, S);
+}
+function drawScopePts(s){
+  const sc = scopes[s], pts = latest[s]; if (!pts || !sc.size) return;
+  const ctx = sc.fg.getContext('2d'), S = sc.fg.width, k = S / (2 * RANGE);
+  ctx.globalCompositeOperation = 'destination-out'; ctx.globalAlpha = 1;
+  ctx.fillStyle = 'rgba(0,0,0,0.30)'; ctx.fillRect(0, 0, S, S);
+  ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = T.p[s]; ctx.globalAlpha = 0.62;
+  const r = Math.max(2, 1.6 * sc.dpr), h = r / 2;
+  for (let i = 0; i < pts.length; i += 2) {
+    const x = (pts[i] + RANGE) * k, y = (RANGE - pts[i + 1]) * k;
+    ctx.fillRect(x - h, y - h, r, r);
+  }
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+}
+let lastText = 0;
+function updateReadouts(){
+  for (const s of SCH) {
+    const h = hist[s]; if (!h.length) continue;
+    let e = 0, b = 0, m = 0; for (const x of h) { e += x.err; b += x.bits; m += x.mse; }
+    const ber = e / b, snr = -10 * Math.log10(m / h.length), sc = scopes[s];
+    const shown = e === 0 ? 1 / b : ber;
+    sc.v.textContent = (e === 0 ? '< ' : '') + 'BER ' + sci(shown);
+    sc.v.classList.toggle('bad', ber > FEC);
+    sc.sn.textContent = '実効 SNR ' + snr.toFixed(1) + ' dB';
+    sc.fill.style.width = (meterPos(shown) * 100) + '%';
+  }
+}
+
+/* ---------- trace ---------- */
+const traceCv = $('#trace');
+let traceDpr = 1;
+function layoutTrace(){ const r = traceCv.parentElement.getBoundingClientRect(); traceDpr = sizeCanvas(traceCv, Math.max(50, r.width), Math.max(40, r.height)); drawTrace(); }
+function drawTrace(){
+  const ctx = traceCv.getContext('2d'), W = traceCv.width, H = traceCv.height, d = traceDpr;
+  ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0, 0, W, H);
+  const padL = 34 * d, padR = 6 * d, padT = 6 * d, padB = 6 * d;
+  const lo = 6, hi = 20, y = v => padT + (hi - Math.max(lo, Math.min(hi, v))) / (hi - lo) * (H - padT - padB);
+  ctx.font = `${10.5 * d}px "IBM Plex Sans JP","Hiragino Sans",sans-serif`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (const g of [8, 12, 16, 20]) {
+    ctx.strokeStyle = T.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, y(g)); ctx.lineTo(W - padR, y(g)); ctx.stroke();
+    ctx.fillStyle = T.text2; ctx.fillText(g + ' dB', padL - 6 * d, y(g));
+  }
+  const n = TRACE_LEN, x = i => padL + (W - padL - padR) * i / (n - 1);
+  for (const s of SCH) {
+    const t = trace[s]; if (t.length < 2) continue;
+    ctx.strokeStyle = T.s[s]; ctx.lineWidth = (s === 'D' ? 2.6 : 1.5) * d; ctx.lineJoin = 'round';
+    ctx.beginPath(); const off = n - t.length;
+    for (let i = 0; i < t.length; i++) { const X = x(i + off), Y = y(t[i]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+    ctx.stroke();
+  }
+}
+
+/* ---------- XY pad ---------- */
+const pad = $('#pad');
+let padDpr = 1, padSize = 0;
+const trail = [];
+function layoutPad(){ const r = pad.getBoundingClientRect(); padSize = Math.floor(r.width); padDpr = sizeCanvas(pad, padSize, padSize); pad.style.width = ''; pad.style.height = ''; drawPad(); }
+function drawPad(){
+  if (!padSize) return;
+  const ctx = pad.getContext('2d'), S = pad.width, d = padDpr, R = 10;
+  const px = t2 => (t2 + R) / (2 * R) * S, py = t1 => (R - t1) / (2 * R) * S;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle = T.surface2; ctx.fillRect(0, 0, S, S);
+  ctx.lineWidth = 1;
+  for (let v = -R; v <= R; v++) {
+    ctx.strokeStyle = v === 0 ? T.text2 : (v % 5 === 0 ? T.line : 'transparent');
+    if (v % 5 !== 0 && v !== 0) continue;
+    ctx.globalAlpha = v === 0 ? 0.5 : 1;
+    ctx.beginPath(); ctx.moveTo(px(v), 0); ctx.lineTo(px(v), S); ctx.moveTo(0, py(v)); ctx.lineTo(S, py(v)); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  // paper range
+  ctx.strokeStyle = T.acc; ctx.lineWidth = 1.5 * d; ctx.setLineDash([5 * d, 4 * d]);
+  ctx.strokeRect(px(-5), py(5), px(5) - px(-5), py(-5) - py(5)); ctx.setLineDash([]);
+  ctx.fillStyle = T.acc; ctx.font = `600 ${10.5 * d}px "IBM Plex Sans JP","Hiragino Sans",sans-serif`; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText('論文の測定範囲', px(-5) + 4 * d, py(5) - 3 * d);
+  ctx.fillStyle = T.text2; ctx.font = `${10 * d}px "IBM Plex Sans JP","Hiragino Sans",sans-serif`; ctx.textBaseline = 'top';
+  ctx.fillText('−10', 4 * d, py(0) + 3 * d); ctx.textAlign = 'right'; ctx.fillText('+10', S - 4 * d, py(0) + 3 * d);
+  ctx.textAlign = 'left'; ctx.fillText('+10', px(0) + 4 * d, 4 * d); ctx.textBaseline = 'bottom'; ctx.fillText('−10', px(0) + 4 * d, S - 4 * d);
+  // trail
+  if (trail.length > 1) {
+    ctx.lineWidth = 2 * d; ctx.lineCap = 'round';
+    for (let i = 1; i < trail.length; i++) {
+      ctx.globalAlpha = i / trail.length * 0.6; ctx.strokeStyle = T.text;
+      ctx.beginPath(); ctx.moveTo(px(trail[i - 1][1]), py(trail[i - 1][0])); ctx.lineTo(px(trail[i][1]), py(trail[i][0])); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  // handle
+  const hx = px(st.tau2), hy = py(st.tau1);
+  ctx.strokeStyle = T.text; ctx.lineWidth = 1 * d; ctx.globalAlpha = 0.35;
+  ctx.beginPath(); ctx.moveTo(hx, 0); ctx.lineTo(hx, S); ctx.moveTo(0, hy); ctx.lineTo(S, hy); ctx.stroke(); ctx.globalAlpha = 1;
+  ctx.fillStyle = T.surface; ctx.strokeStyle = T.text; ctx.lineWidth = 3 * d;
+  ctx.beginPath(); ctx.arc(hx, hy, 12 * d, 0, 7); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = T.text; ctx.beginPath(); ctx.arc(hx, hy, 3.5 * d, 0, 7); ctx.fill();
+}
+function padSet(e){
+  const r = pad.getBoundingClientRect();
+  const t2 = ((e.clientX - r.left) / r.width) * 20 - 10, t1 = 10 - ((e.clientY - r.top) / r.height) * 20;
+  setTau(Math.round(t1 * 2) / 2, Math.round(t2 * 2) / 2, true);
+}
+pad.addEventListener('pointerdown', e => { userAct(); pad.setPointerCapture(e.pointerId); padSet(e); });
+pad.addEventListener('pointermove', e => { if (pad.hasPointerCapture(e.pointerId)) padSet(e); });
+
+/* ---------- BER maps ---------- */
+const mapCvs = {}; $$('.maps canvas').forEach(c => mapCvs[c.dataset.m] = { cv: c, dpr: 1, size: 0 });
+function layoutMaps(){ for (const s of SCH) { const m = mapCvs[s], r = m.cv.getBoundingClientRect(); m.size = Math.floor(r.width); m.dpr = sizeCanvas(m.cv, m.size, m.size); m.cv.style.width = ''; m.cv.style.height = ''; } mapsDirty = true; }
+function drawMaps(){
+  const m = getMap(condKey(st));
+  for (const s of SCH) {
+    const o = mapCvs[s]; if (!o.size) continue;
+    const ctx = o.cv.getContext('2d'), S = o.cv.width, c = S / 11, d = o.dpr;
+    ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle = T.mapNone; ctx.fillRect(0, 0, S, S);
+    for (let i = 0; i < 121; i++) {
+      const b = m[s].bits[i]; if (!b) continue;
+      const ber = Math.max(m[s].err[i], 0.5) / b;
+      const t = (Math.log10(ber) + 4) / 3;
+      ctx.fillStyle = mapColor(t);
+      ctx.fillRect(Math.floor((i % 11) * c), Math.floor(Math.floor(i / 11) * c), Math.ceil(c), Math.ceil(c));
+    }
+    if (Math.abs(st.tau1) <= 5.5 && Math.abs(st.tau2) <= 5.5) {
+      const x = (st.tau2 + 5.5) / 11 * S, y = (5.5 - st.tau1) / 11 * S;
+      ctx.strokeStyle = T.text; ctx.lineWidth = 1.5 * d; ctx.beginPath(); ctx.arc(x, y, Math.max(3 * d, c * 0.42), 0, 7); ctx.stroke();
+    }
+  }
+  const k = condKey(st), def = condKey(DEF);
+  $('#mapCond').textContent = k === def ? 'Fig. 3 と同じ軸，±5 ps' : '条件を変更中（別のマップ）';
+  mapsDirty = false;
+}
+$('#clearBtn').addEventListener('click', () => { userAct(); maps.delete(condKey(st)); mapsDirty = true; setStatus('この条件のマップを消去しました．'); });
+function setStatus(t){ $('#mapStatus').textContent = t; }
+
+/* ---------- sweep (Fig. 3 reproduction) ---------- */
+let sweep = null;
+const SETTLE = 2, MEAS = 3;
+function startSweep(){
+  stopDrift(); const pts = [];
+  for (let r = 0; r < 11; r++) { const t1 = 5 - r; for (let c = 0; c < 11; c++) { const t2 = (r % 2 === 0) ? c - 5 : 5 - c; pts.push([t1, t2]); } }
+  sweep = { pts, i: 0, n: 0 };
+  setTau(pts[0][0], pts[0][1], false);
+  $('#sweepBtn').textContent = '測定を止める'; $('#sweepBtn').setAttribute('aria-pressed', 'true');
+  setStatus('測定中 1 / 121 点');
+}
+function stopSweep(msg){
+  if (!sweep) return; sweep = null;
+  $('#sweepBtn').textContent = 'Fig. 3 を自動測定'; $('#sweepBtn').setAttribute('aria-pressed', 'false');
+  if (msg) setStatus(msg);
+}
+function sweepTick(p){
+  const [t1, t2] = sweep.pts[sweep.i];
+  if (Math.abs(p.tau1 - t1) > 1e-9 || Math.abs(p.tau2 - t2) > 1e-9) return;
+  sweep.n++;
+  if (sweep.n >= SETTLE + MEAS + 1) {
+    sweep.i++; sweep.n = 0;
+    if (sweep.i >= sweep.pts.length) { stopSweep('121 点の測定が終わりました．論文の Fig. 3 と比べてみてください．'); return; }
+    const q = sweep.pts[sweep.i]; setTau(q[0], q[1], false);
+    setStatus('測定中 ' + (sweep.i + 1) + ' / 121 点');
+  }
+}
+$('#sweepBtn').addEventListener('click', () => { userAct(); if (sweep) stopSweep('測定を止めました．'); else startSweep(); });
+
+/* ---------- controls ---------- */
+const ui = {
+  tau1: $('#tau1'), tau2: $('#tau2'), snr: $('#snr'), amp1: $('#amp1'), amp2: $('#amp2'), ph1: $('#ph1'), ph2: $('#ph2')
+};
+function syncUI(){
+  ui.tau1.value = st.tau1; ui.tau2.value = st.tau2;
+  $('#tau1o').textContent = fmtPs(st.tau1); $('#tau2o').textContent = fmtPs(st.tau2);
+  ui.snr.value = st.snrDb; $('#snro').textContent = (st.snrDb + 9.03).toFixed(1) + ' dB';
+  ui.amp1.value = st.amp1; ui.amp2.value = st.amp2; ui.ph1.value = st.ph1; ui.ph2.value = st.ph2;
+  $('#amp1o').textContent = fmtSigned(st.amp1, 1, ' dB'); $('#amp2o').textContent = fmtSigned(st.amp2, 1, ' dB');
+  $('#ph1o').textContent = fmtSigned(st.ph1, 1, '°'); $('#ph2o').textContent = fmtSigned(st.ph2, 1, '°');
+  $('#sopSw').setAttribute('aria-checked', String(st.sopRot)); $('#cdcfSw').setAttribute('aria-checked', String(st.conjCDCF));
+  $('#snro').title = 'SNR ' + st.snrDb.toFixed(1) + ' dB（100 GBaud，0.1 nm 換算）';
+  padDirty = true; mapsDirty = true;
+}
+let padDirty = true;
+function setTau(t1, t2, user){
+  t1 = Math.max(-10, Math.min(10, t1)); t2 = Math.max(-10, Math.min(10, t2));
+  if (user) { stopDrift(); if (sweep) stopSweep('操作したので測定を止めました．'); }
+  const lt = trail[trail.length - 1];
+  if (!lt || Math.hypot(lt[0] - t1, lt[1] - t2) > 0.15) { trail.push([t1, t2]); if (trail.length > 60) trail.shift(); }
+  st.tau1 = t1; st.tau2 = t2;
+  $('#tau1o').textContent = fmtPs(t1); $('#tau2o').textContent = fmtPs(t2);
+  if (+ui.tau1.value !== t1) ui.tau1.value = t1;
+  if (+ui.tau2.value !== t2) ui.tau2.value = t2;
+  padDirty = true; mapsDirty = true;
+}
+ui.tau1.addEventListener('input', () => { userAct(); setTau(+ui.tau1.value, st.tau2, true); });
+ui.tau2.addEventListener('input', () => { userAct(); setTau(st.tau1, +ui.tau2.value, true); });
+function bindRange(el, key){ el.addEventListener('input', () => { userAct(); if (sweep) stopSweep('条件を変えたので測定を止めました．'); st[key] = +el.value; syncUI(); }); }
+bindRange(ui.snr, 'snrDb'); bindRange(ui.amp1, 'amp1'); bindRange(ui.amp2, 'amp2'); bindRange(ui.ph1, 'ph1'); bindRange(ui.ph2, 'ph2');
+$('#sopSw').addEventListener('click', () => { userAct(); st.sopRot = !st.sopRot; syncUI(); });
+$('#cdcfSw').addEventListener('click', () => { userAct(); if (sweep) stopSweep('条件を変えたので測定を止めました．'); st.conjCDCF = !st.conjCDCF; syncUI(); });
+$('#zeroBtn').addEventListener('click', () => { userAct(); setTau(0, 0, true); });
+$('#randBtn').addEventListener('click', () => {
+  userAct();
+  const q = v => Math.round(v * 2) / 2, rr = () => Math.random() * 2 - 1;
+  setTau(q(rr() * 5), q(rr() * 5), true);
+  st.amp1 = Math.round(rr() * 15) / 10; st.amp2 = Math.round(rr() * 15) / 10;
+  st.ph1 = q(rr() * 8); st.ph2 = q(rr() * 8);
+  syncUI(); setStatus('スキュー，振幅，位相をランダムに設定しました．D が崩れるか見てください．');
+});
+$('#defBtn').addEventListener('click', () => { userAct(); stopDrift(); if (sweep) stopSweep(); Object.assign(st, DEF); trail.length = 0; syncUI(); setStatus('初期設定に戻しました．'); });
+function startLearn(){
+  resetFlag = true; st.mu = 0.0012; slowLearn = 45; holdOff = 60;
+  setStatus('等化器を初期化しました．コンスタレーションが整っていく様子を見てください．');
+}
+$('#learnBtn').addEventListener('click', () => { userAct(); startLearn(); });
+
+/* ---------- drift ---------- */
+let drift = false, driftT = 0, lastFrame = performance.now();
+let driftFrom = [0, 0], driftBlend = 1;
+function startDrift(){ if (sweep) stopSweep(); drift = true; driftFrom = [st.tau1, st.tau2]; driftBlend = 0; $('#driftBtn').setAttribute('aria-pressed', 'true'); }
+function stopDrift(){ drift = false; $('#driftBtn').setAttribute('aria-pressed', 'false'); }
+$('#driftBtn').addEventListener('click', () => { userAct(); drift ? stopDrift() : startDrift(); });
+function driftStep(dt){
+  driftT += dt;
+  const t = driftT;
+  const t1 = 3.1 * Math.sin(0.42 * t + 0.3) + 1.6 * Math.sin(1.07 * t + 2.1);
+  const t2 = 3.0 * Math.sin(0.37 * t + 1.9) + 1.7 * Math.sin(0.93 * t + 0.4);
+  driftBlend = Math.min(1, driftBlend + dt / 2);
+  const b = driftBlend * driftBlend * (3 - 2 * driftBlend);
+  const u1 = driftFrom[0] + (t1 - driftFrom[0]) * b, u2 = driftFrom[1] + (t2 - driftFrom[1]) * b;
+  setTau(Math.round(u1 * 100) / 100, Math.round(u2 * 100) / 100, false);
+}
+
+/* ---------- idle attract ---------- */
+let lastAct = performance.now(), idleDrift = false;
+function userAct(){ lastAct = performance.now(); $('#idleHint').classList.remove('on'); keepAwake(); }
+document.addEventListener('pointerdown', () => { lastAct = performance.now(); $('#idleHint').classList.remove('on'); keepAwake(); }, { passive: true });
+setInterval(() => {
+  if (performance.now() - lastAct > 60000 && !drift && !sweep && currentView === 'demo') { startDrift(); $('#idleHint').classList.add('on'); }
+}, 2000);
+
+/* ---------- views ---------- */
+let currentView = 'demo';
+function showView(v){
+  currentView = v;
+  $$('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === v)));
+  $('#view-demo').hidden = v !== 'demo'; $('#view-how').hidden = v !== 'how';
+  if (location.hash !== '#' + v) { try { history.replaceState(null, '', v === 'demo' ? location.pathname + location.search : '#how'); } catch(e){} }
+  requestAnimationFrame(layoutAll);
+}
+$$('.tabs button').forEach(b => b.addEventListener('click', () => { userAct(); showView(b.dataset.view); }));
+window.addEventListener('hashchange', () => showView(location.hash === '#how' ? 'how' : 'demo'));
+$('#tryAbl').addEventListener('click', () => {
+  userAct(); showView('demo'); $('#more').open = true;
+  st.conjCDCF = false; setTau(4, -4, true); syncUI();
+  setStatus('共役パスの CDCF を外しました．スキューがあると D も劣化します．スイッチを戻すと回復します．');
+});
+$('#tryLearn').addEventListener('click', () => { userAct(); showView('demo'); startLearn(); });
+
+/* ---------- HOW view: interactive spectrum ---------- */
+const howCv = $('#howCv');
+let howDpr = 1, howMode = 'D', howFs = -42, howAnim = 1, howAnimFrom = null, howTau = 5;
+function layoutHow(){ const r = howCv.parentElement.getBoundingClientRect(); if (r.width < 10) return; howDpr = sizeCanvas(howCv, r.width, r.height); drawHow(); }
+const rcAmp = f => { const a = Math.abs(f); return a <= 45 ? 1 : a >= 55 ? 0 : 0.5 * (1 + Math.cos(Math.PI * (a - 45) / 10)); };
+function howGeom(){
+  const W = howCv.width, H = howCv.height, d = howDpr;
+  const l = 18 * d, r = 18 * d, t = 54 * d, b = 52 * d;
+  const fx = f => l + (f + 70) / 140 * (W - l - r);
+  const base = H - b, ph = H - t - b;
+  return { W, H, d, l, r, t, b, fx, base, ph, xf: x => (x - l) / (W - l - r) * 140 - 70 };
+}
+function arrow(ctx, x, y0, y1, w, color, hollow, dash, d){
+  ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = w;
+  if (dash) ctx.setLineDash([5 * d, 4 * d]);
+  ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1 + 9 * d); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x - 7 * d, y1 + 12 * d); ctx.lineTo(x + 7 * d, y1 + 12 * d); ctx.closePath();
+  if (hollow) { ctx.lineWidth = 2 * d; ctx.stroke(); } else ctx.fill();
+  ctx.restore();
+}
+function drawHow(){
+  if (currentView !== 'how') return;
+  const g = howGeom(), ctx = howCv.getContext('2d'), d = g.d, { fx, base, ph } = g;
+  ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0, 0, g.W, g.H);
+  const font = (w, s) => `${w} ${s * d}px "IBM Plex Sans JP","Hiragino Sans",sans-serif`;
+  // axis
+  ctx.strokeStyle = T.text2; ctx.lineWidth = 1.2 * d; ctx.beginPath(); ctx.moveTo(g.l, base); ctx.lineTo(g.W - g.r, base); ctx.stroke();
+  ctx.fillStyle = T.text2; ctx.font = font(400, 11); ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let f = -60; f <= 60; f += 20) { ctx.beginPath(); ctx.moveTo(fx(f), base); ctx.lineTo(fx(f), base + 5 * d); ctx.stroke(); ctx.fillText((f > 0 ? '+' : f < 0 ? '−' : '') + Math.abs(f), fx(f), base + 8 * d); }
+  ctx.fillText('光周波数（f₀ からの差）[GHz]', g.W / 2, base + 26 * d);
+  // spectra
+  const sh = ph * 0.40;
+  const band = (lo, hi, col, k) => {
+    ctx.beginPath(); ctx.moveTo(fx(lo), base);
+    for (let f = lo; f <= hi + 1e-9; f += 0.25) {
+      const u = Math.min(1, Math.max(0, (f + 1) / 2)), w = k === 0 ? Math.cos(Math.PI * u / 2) ** 2 : 1 - Math.cos(Math.PI * u / 2) ** 2;
+      ctx.lineTo(fx(f), base - sh * rcAmp(f) * w);
+    }
+    ctx.lineTo(fx(hi), base); ctx.closePath();
+    ctx.globalAlpha = 0.18; ctx.fillStyle = col; ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = col; ctx.lineWidth = 1.6 * d; ctx.stroke();
+  };
+  band(-56, 1, T.sb1, 0); band(-1, 56, T.sb2, 1);
+  ctx.font = font(600, 12); ctx.textBaseline = 'bottom';
+  ctx.fillStyle = T.sb1; ctx.fillText('サブバンド #1', fx(-38), base - sh - 6 * d);
+  ctx.fillStyle = T.sb2; ctx.fillText('サブバンド #2', fx(38), base - sh - 6 * d);
+  // axes markers
+  const vline = (f, label, col, dash) => {
+    ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1.4 * d; if (dash) ctx.setLineDash([4 * d, 4 * d]);
+    ctx.beginPath(); ctx.moveTo(fx(f), base); ctx.lineTo(fx(f), g.t - 22 * d); ctx.stroke(); ctx.restore();
+    ctx.fillStyle = col; ctx.font = font(700, 12.5); ctx.textBaseline = 'bottom'; ctx.textAlign = 'center'; ctx.fillText(label, fx(f), g.t - 26 * d);
+  };
+  vline(-25, 'LO₁', T.sb1, true); vline(25, 'LO₂', T.sb2, true); vline(0, 'f₀', T.text2, true);
+  // tone and image
+  const fs = howFs, k = fs < 0 ? 0 : 1, LO = k ? 25 : -25, fimg = 2 * LO - fs, fbb = fs - LO;
+  const th = ph * 0.70, toneTop = base - th;
+  let ratio = Math.abs(Math.tan(Math.PI * fbb * 1e9 * howTau * 1e-12)); ratio = Math.min(ratio, 1);
+  const ih = th * ratio, hasImg = ih > 2 * d;
+  const loName = k ? 'LO₂' : 'LO₁';
+  const archY = toneTop - 34 * d;
+  const lateLabels = [];
+  const pill = (txt, x, y, col, align) => {
+    ctx.font = font(600, 12); const w = ctx.measureText(txt).width, h = 18 * d;
+    let x0 = align === 'left' ? x : align === 'right' ? x - w - 12 * d : x - w / 2 - 6 * d;
+    x0 = Math.max(2 * d, Math.min(g.W - w - 14 * d, x0));
+    ctx.fillStyle = T.surface; ctx.globalAlpha = 0.92; ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x0, y - h, w + 12 * d, h, 5 * d); else ctx.rect(x0, y - h, w + 12 * d, h);
+    ctx.fill(); ctx.globalAlpha = 1;
+    ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(txt, x0 + 6 * d, y - h / 2 + 0.5 * d);
+  };
+  const arch = (fa, fb, lift, col, dash, yEnd, label) => {
+    const xa = fx(fa), xb = fx(fb), xm = (xa + xb) / 2;
+    ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2 * d; if (dash) ctx.setLineDash([6 * d, 4 * d]);
+    ctx.beginPath(); ctx.moveTo(xa, archY); ctx.quadraticCurveTo(xm, archY - 2 * lift, xb, archY); ctx.stroke();
+    ctx.setLineDash([2 * d, 4 * d]); ctx.lineWidth = 1.4 * d;
+    ctx.beginPath(); ctx.moveTo(xb, archY); ctx.lineTo(xb, yEnd); ctx.stroke(); ctx.setLineDash([]);
+    const dir = Math.sign(xb - xa) || 1;
+    ctx.beginPath(); ctx.moveTo(xb, archY + 1 * d); ctx.lineTo(xb - dir * 11 * d, archY - 9 * d); ctx.lineTo(xb - dir * 2 * d, archY - 11 * d); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    lateLabels.push([label, xm, archY - lift - 4 * d, col]);
+  };
+  // tone
+  arrow(ctx, fx(fs), base, toneTop, 3 * d, T.text, false, false, d);
+  ctx.fillStyle = T.surface; ctx.strokeStyle = T.text; ctx.lineWidth = 2.5 * d;
+  ctx.beginPath(); ctx.arc(fx(fs), toneTop - 16 * d, 10 * d, 0, 7); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = T.text; ctx.font = font(600, 12.5); ctx.textAlign = fs < LO ? 'right' : 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('信号成分', fx(fs) + (fs < LO ? -16 : 16) * d, toneTop - 16 * d);
+  // image
+  const side = fimg > fs ? 1 : -1;
+  if (hasImg) {
+    arrow(ctx, fx(fimg), base, base - ih, 3 * d, T.bad, false, false, d);
+    pill('IQ イメージ', fx(fimg) + side * 10 * d, base - ih + 9 * d, T.bad, side > 0 ? 'left' : 'right');
+    arch(fs, fimg, Math.min(46 * d, Math.abs(fx(fimg) - fx(fs)) * 0.22), T.bad, false, base - ih - 2 * d, 'IQ 不平衡：' + loName + ' を軸に折り返し');
+  } else {
+    pill('τ = 0 なのでイメージなし', fx(fimg), base - 10 * d, T.text2, 'center');
+  }
+  // replica
+  const target = howMode === 'B' ? -fs : fimg;
+  const from = howAnimFrom === null ? target : howAnimFrom;
+  const e = 1 - Math.pow(1 - howAnim, 3);
+  const cur = from + (target - from) * e;
+  const rh = Math.max(ih, th * 0.22);
+  const rc = howMode === 'B' ? T.s.B : T.s.D;
+  arrow(ctx, fx(cur), base, base - rh, 2.4 * d, rc, true, true, d);
+  const coincide = Math.abs(cur - fimg) < 4 && hasImg;
+  const rside = coincide ? -side : (cur > fs ? 1 : -1);
+  pill('共役で作る複製', fx(cur) + rside * 10 * d, base - rh + (coincide ? 33 : 9) * d, rc, rside > 0 ? 'left' : 'right');
+  if (howAnim >= 1) {
+    const span = Math.abs(fx(target) - fx(fs));
+    const lift = howMode === 'B' ? Math.min(78 * d, span * 0.3) : Math.min(46 * d, span * 0.22) + 34 * d;
+    arch(fs, target, lift, rc, true, base - rh - 2 * d, howMode === 'B' ? '再結合後の共役：f₀ を軸に折り返し' : 'ブランチ毎の共役：' + loName + ' を軸に折り返し');
+  }
+  for (const L of lateLabels) pill(L[0], L[1], L[2], L[3], 'center');
+  ctx.fillStyle = T.text2; ctx.font = font(400, 12); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText('グラフに触れると信号成分の位置を動かせます', g.l, 6 * d);
+  // status
+  const f1 = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(0);
+  const st_ = $('#howStatus');
+  if (howMode === 'B') {
+    st_.innerHTML = `<b class="ng">打ち消せない．</b>再結合後に共役をとると，複製は f₀ を軸に折り返した ${f1(-fs)} GHz にできます．イメージは ${loName} を軸に折り返した ${f1(fimg)} GHz にあるので，周波数が合いません．`;
+  } else {
+    st_.innerHTML = `<b class="ok">打ち消せる．</b>ブランチ毎に共役をとると，複製も ${loName} を軸に折り返され，イメージと同じ ${f1(fimg)} GHz にできます．WL フィルタが重みを合わせて差し引きます．`;
+  }
+}
+let howDrag = false;
+function howSetFromEvent(ev){
+  const r = howCv.getBoundingClientRect(), g = howGeom();
+  let f = g.xf((ev.clientX - r.left) * g.d);
+  f = Math.max(-54, Math.min(54, f)); if (Math.abs(f) < 3) f = f < 0 ? -3 : 3;
+  howFs = Math.round(f); drawHow();
+}
+howCv.addEventListener('pointerdown', ev => {
+  userAct(); howDrag = true; howCv.setPointerCapture(ev.pointerId); howSetFromEvent(ev);
+});
+howCv.addEventListener('pointermove', ev => { if (howDrag) howSetFromEvent(ev); });
+howCv.addEventListener('pointerup', () => { howDrag = false; });
+howCv.addEventListener('pointercancel', () => { howDrag = false; });
+$$('.seg button').forEach(b => b.addEventListener('click', () => {
+  userAct(); if (b.dataset.m === howMode) return;
+  const fs = howFs, LO = fs < 0 ? -25 : 25;
+  howAnimFrom = howMode === 'B' ? -fs : 2 * LO - fs;
+  howMode = b.dataset.m; howAnim = reduceMotion ? 1 : 0;
+  $$('.seg button').forEach(x => x.setAttribute('aria-checked', String(x.dataset.m === howMode)));
+  drawHow();
+}));
+$('#howTau').addEventListener('input', e => { userAct(); howTau = +e.target.value; $('#howTauo').textContent = howTau.toFixed(1) + ' ps'; drawHow(); });
+
+/* ---------- layout & loop ---------- */
+function layoutAll(){
+  if (currentView === 'demo') { SCH.forEach(layoutScope); layoutTrace(); layoutPad(); layoutMaps(); }
+  else layoutHow();
+}
+function redrawAllStatic(){ SCH.forEach(s => scopes[s].size && drawScopeBg(s)); drawTrace(); padDirty = true; mapsDirty = true; drawHow(); }
+const ro = new ResizeObserver(() => layoutAll());
+ro.observe(document.body); $$('.screen').forEach(el => ro.observe(el)); ro.observe(howCv.parentElement); ro.observe(traceCv.parentElement);
+
+function frame(now){
+  const dt = Math.min(0.1, (now - lastFrame) / 1000); lastFrame = now;
+  if (drift) driftStep(dt);
+  if (currentView === 'demo') {
+    if (newData) { SCH.forEach(drawScopePts); drawTrace(); newData = false; }
+    if (now - lastText > 180) { updateReadouts(); lastText = now; }
+    if (padDirty) { drawPad(); padDirty = false; }
+    if (mapsDirty) drawMaps();
+  } else if (howAnim < 1) {
+    howAnim = Math.min(1, howAnim + dt / 0.55); if (howAnim >= 1) howAnimFrom = null; drawHow();
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---------- start ---------- */
+applyTheme(); syncUI();
+showView(location.hash === '#how' ? 'how' : 'demo');
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => redrawAllStatic());
+initSim();
+requestAnimationFrame(frame);
+})();
 </script>
 </body>
 </html>
