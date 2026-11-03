@@ -9,6 +9,13 @@ const pad = $('#pad');
 // padSize/padDpr：現在の一辺ピクセルと描画解像度。trail：手の軌跡（過去の τ を少し残して線で描く）。
 let padDpr = 1, padSize = 0;
 const trail = [];
+// 指ヒント：最初だけパッド上に薄く指の絵を出し「ドラッグで動かせる」ことを示す。一度操作すると消える。
+// padHintShow=まだ操作されていない(=指を出す), padHintK=表示の強さ0..1(最初はフェードイン→操作後フェードアウト)。
+// padFx/padFy=指先の描画位置（目標へ滑らかに追従。null は未初期化）。
+let padHintShow = true, padHintK = 0, padFx = null, padFy = null;
+// 操作があったら指ヒント（手の絵）と「指でドラッグ…」の文字表示を同時に消す。
+// （パッドのタッチ・スライダー・各ボタン＝setTau(user) から呼ぶ。updateIdleHint は controls.js）
+function dismissPadHint(){ if (padHintShow){ padHintShow = false; padDirty = true; updateIdleHint(); } }
 // layoutPad：要素の実寸に合わせて正方キャンバスの解像度を設定し直し、再描画。
 function layoutPad(){ const r = pad.getBoundingClientRect(); padSize = Math.floor(r.width); padDpr = sizeCanvas(pad, padSize, padSize); pad.style.width = ''; pad.style.height = ''; drawPad(); }
 function drawPad(){
@@ -55,6 +62,44 @@ function drawPad(){
   ctx.fillStyle = T.surface; ctx.strokeStyle = T.text; ctx.lineWidth = 3 * d;
   ctx.beginPath(); ctx.arc(hx, hy, 12 * d, 0, 7); ctx.fill(); ctx.stroke();
   ctx.fillStyle = T.text; ctx.beginPath(); ctx.arc(hx, hy, 3.5 * d, 0, 7); ctx.fill();
+  // --- 指ヒント（最初だけ：ドラッグのジェスチャーを実演。一度操作すると手・文字とも消える） ---
+  // 手首は右下（パッドの外）から入り、指先がパッド内でドラッグするよう動く（シミュレーションは動かさない）。
+  // 放置で自動デモ(drift)が始まったら、指はハンドルに乗って一緒に動く。
+  const hintTarget = padHintShow ? 1 : 0;
+  padHintK += (hintTarget - padHintK) * 0.16;           // 緩やかにフェード
+  if (padHintK > 0.01) {
+    const now = performance.now(), k = S / 300;          // 大きさはパッド幅に比例
+    // 指先の目標位置を決める。
+    let fxT, fyT;
+    if (drift) {
+      // 放置後の自動デモ中：指をハンドルに乗せ、一緒に動かす（＝指がドラッグしているように見せる）。
+      fxT = px(st.tau2); fyT = py(st.tau1);
+    } else {
+      // 静止中：ドラッグのジェスチャー（ゆっくりした輪）を実演。シミュレーションは動かさない。
+      const ph = now / 3400 * 2 * Math.PI;
+      fxT = S * 0.6 + Math.cos(ph) * S * 0.09;
+      fyT = S * 0.6 + Math.sin(ph) * S * 0.075;
+    }
+    if (padFx === null) { padFx = fxT; padFy = fyT; }
+    padFx += (fxT - padFx) * 0.18; padFy += (fyT - padFy) * 0.18; // 目標へ滑らかに追従（ドリフト切替の飛びも吸収）
+    const tx = padFx, ty = padFy;
+    const a = padHintK * 0.5;                             // 薄め
+    // タッチ点の波紋（指先から広がる輪）。
+    const rp = (now / 1600) % 1;
+    ctx.globalAlpha = padHintK * 0.55 * (1 - rp); ctx.strokeStyle = T.text; ctx.lineWidth = 2 * d;
+    ctx.beginPath(); ctx.arc(tx, ty, (4 + rp * 16) * d, 0, 7); ctx.stroke();
+    // 手：指先 tx,ty を起点に右下（45°）へ伸ばし、こぶし〜手首〜前腕はパッド外へ抜ける。
+    ctx.save(); ctx.translate(tx, ty); ctx.rotate(-Math.PI / 4); ctx.scale(k, k);
+    const hand = new Path2D();
+    hand.roundRect(-5.5, 0, 11, 52, 5.5);                // 人差し指（短め）
+    hand.roundRect(-21, 42, 42, 50, 15);                 // こぶし（手の甲）＝いちばん太い部分
+    hand.roundRect(-31, 50, 16, 15, 7.5);                // 親指
+    hand.roundRect(-13, 82, 26, 64, 12);                 // 手首（短め・パッドの外へ）
+    ctx.globalAlpha = a * 0.35; ctx.lineWidth = 7; ctx.strokeStyle = T.surface2; ctx.stroke(hand); // 格子から浮かせる下地
+    ctx.globalAlpha = a; ctx.fillStyle = T.text; ctx.fill(hand);
+    ctx.restore(); ctx.globalAlpha = 1;
+    // 次フレームの再描画は main.js の frame() が padHintK>0 を見て駆動する。
+  } else if (!padHintShow) padHintK = 0;
 }
 // padSet：ポインタ座標を τ₁/τ₂ に変換して反映。要素内の相対位置 0..1 を ±10 ps に写像し、0.5 ps 刻みに丸める。
 function padSet(e){
@@ -63,5 +108,5 @@ function padSet(e){
   setTau(Math.round(t1 * 2) / 2, Math.round(t2 * 2) / 2, true);
 }
 // ドラッグ操作：押した指を捕捉（setPointerCapture）し、押下中の移動を τ に反映し続ける。
-pad.addEventListener('pointerdown', e => { userAct(); pad.setPointerCapture(e.pointerId); padSet(e); });
+pad.addEventListener('pointerdown', e => { userAct(); dismissPadHint(); pad.setPointerCapture(e.pointerId); padSet(e); });
 pad.addEventListener('pointermove', e => { if (pad.hasPointerCapture(e.pointerId)) padSet(e); });

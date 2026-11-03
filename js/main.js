@@ -98,8 +98,9 @@ function frame(now){
     if (newData) { SCH.forEach(drawScopePts); drawTrace(); newData = false; }
     // 文字（BER等の読み値）は負荷軽減のため約180ms間隔で更新。
     if (now - lastText > 180) { updateReadouts(); lastText = now; }
-    // XYパッド・BERマップは「汚れフラグ」が立っているときだけ再描画。
-    if (padDirty) { drawPad(); padDirty = false; }
+    // XYパッドは「汚れフラグ」が立っているとき、または指ヒント表示中（padHintK>0）は毎フレーム再描画。
+    //   後者で指・波紋のアニメーションを動かし続ける（padHintK は pad.js の共有変数）。
+    if (padDirty || padHintK > 0.005) { padDirty = false; drawPad(); }
     if (mapsDirty) drawMaps();
   } else if (howAnim < 1) {
     // 「しくみ」ビューでは、方式切替アニメが進行中のときだけ再描画する。

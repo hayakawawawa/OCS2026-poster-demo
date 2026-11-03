@@ -53,7 +53,9 @@ const rcAmp = f => { const a = Math.abs(f); return a <= 45 ? 1 : a >= 55 ? 0 : 0
 function howGeom(){
   const W = howCv.width, H = howCv.height, d = howDpr;
   // l,r,t,b は左右上下の余白（d はDPR倍率）。
-  const l = 18 * d, r = 18 * d, t = 54 * d, b = 52 * d;
+  // 低い画面（スマホ横など）は上下の余白を少し詰めて作図領域を広げる。広い画面(=H大)では従来値のまま＝デスクトップ不変。
+  const sq = Math.max(0, Math.min(1, (420 - H / d) / 180));   // CSS高さ420で0、240以下で1
+  const l = 18 * d, r = 18 * d, t = (54 - 7 * sq) * d, b = (52 - 10 * sq) * d;
   const fx = f => l + (f + 70) / 140 * (W - l - r);
   const base = H - b, ph = H - t - b;
   return { W, H, d, l, r, t, b, fx, base, ph, xf: x => (x - l) / (W - l - r) * 140 - 70 };
@@ -105,11 +107,19 @@ function drawHow(){
   ctx.fillStyle = T.sb1; ctx.fillText('サブバンド #1', fx(-38), base - sh - 6 * d);
   ctx.fillStyle = T.sb2; ctx.fillText('サブバンド #2', fx(38), base - sh - 6 * d);
   // axes markers
+  // 上部ヒント文「グラフに触れると…」と軸ラベル(LO₁/f₀/LO₂)は同じ高さに並ぶ。画面が狭いとヒントが横に伸びて
+  // LO₁ の真上に重なるので、横に重なるとき“だけ”軸ラベル行を一段下げる（広い画面では重ならず従来位置のまま）。
+  const hintTxt = 'グラフに触れると信号成分の位置を動かせます';
+  ctx.font = font(400, 12); const hintRight = g.l + ctx.measureText(hintTxt).width;
+  ctx.font = font(700, 12.5); const lo1Left = fx(-25) - ctx.measureText('LO₁').width / 2;
+  const hintHit = hintRight - lo1Left > 4 * d;               // ヒントが LO₁ の左端を越えて重なるか
+  const axisLabelY = hintHit ? g.t - 14 * d : g.t - 26 * d;  // 重なるときだけラベル行を下げる（下端=ベースライン）
+  const vlineTop = axisLabelY + 4 * d;                       // 縦線の上端はラベルのすぐ下
   // vline(): LO や f₀ を示す縦の基準線＋ラベル。これらが「折り返しの軸」になる。
   const vline = (f, label, col, dash) => {
     ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1.4 * d; if (dash) ctx.setLineDash([4 * d, 4 * d]);
-    ctx.beginPath(); ctx.moveTo(fx(f), base); ctx.lineTo(fx(f), g.t - 22 * d); ctx.stroke(); ctx.restore();
-    ctx.fillStyle = col; ctx.font = font(700, 12.5); ctx.textBaseline = 'bottom'; ctx.textAlign = 'center'; ctx.fillText(label, fx(f), g.t - 26 * d);
+    ctx.beginPath(); ctx.moveTo(fx(f), base); ctx.lineTo(fx(f), vlineTop); ctx.stroke(); ctx.restore();
+    ctx.fillStyle = col; ctx.font = font(700, 12.5); ctx.textBaseline = 'bottom'; ctx.textAlign = 'center'; ctx.fillText(label, fx(f), axisLabelY);
   };
   // LO₁=-25GHz, LO₂=+25GHz, f₀=0GHz。
   vline(-25, 'LO₁', T.sb1, true); vline(25, 'LO₂', T.sb2, true); vline(0, 'f₀', T.text2, true);
@@ -124,11 +134,14 @@ function drawHow(){
   const ih = th * ratio, hasImg = ih > 2 * d;
   const loName = k ? 'LO₂' : 'LO₁';
   const archY = toneTop - 34 * d;
-  // 折り返しを示す「弧」のラベルは最後にまとめて描く（他の要素に隠れないように）。
-  const lateLabels = [];
+  // 折り返しを表す「弧」は、ラベルと一緒に最後へまとめて描く（低い画面ではラベルに合わせて弧も低くするため）。
+  const arcs = [];
+  // 低い画面（スマホ横など）はラベル(ピル)の文字と高さを少し小さくして、詰まった中でも重なりにくくする。
+  const shortCv = g.H / d < 300;
+  const pf = shortCv ? 10.5 : 12, pillH = (pf + 6) * d;
   // pill(): 文字の背景に角丸の下敷きを敷いて読みやすくするラベル。align で左/右/中央寄せ、画面外へはみ出さないよう補正。
   const pill = (txt, x, y, col, align) => {
-    ctx.font = font(600, 12); const w = ctx.measureText(txt).width, h = 18 * d;
+    ctx.font = font(600, pf); const w = ctx.measureText(txt).width, h = pillH;
     let x0 = align === 'left' ? x : align === 'right' ? x - w - 12 * d : x - w / 2 - 6 * d;
     x0 = Math.max(2 * d, Math.min(g.W - w - 14 * d, x0));
     ctx.fillStyle = T.surface; ctx.globalAlpha = 0.92; ctx.beginPath();
@@ -136,21 +149,9 @@ function drawHow(){
     ctx.fill(); ctx.globalAlpha = 1;
     ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(txt, x0 + 6 * d, y - h / 2 + 0.5 * d);
   };
-  // arch(): fa から fb への「折り返し」を表す弧＋その先端から下へ降りる点線＋矢じり。label は後で pill で描く。
-  const arch = (fa, fb, lift, col, dash, yEnd, label) => {
-    const xa = fx(fa), xb = fx(fb), xm = (xa + xb) / 2;
-    ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2 * d; if (dash) ctx.setLineDash([6 * d, 4 * d]);
-    // 二次ベジェで山なりの弧。lift が山の高さ。
-    ctx.beginPath(); ctx.moveTo(xa, archY); ctx.quadraticCurveTo(xm, archY - 2 * lift, xb, archY); ctx.stroke();
-    // 弧の終点から対象の高さ(yEnd)まで点線で降ろす。
-    ctx.setLineDash([2 * d, 4 * d]); ctx.lineWidth = 1.4 * d;
-    ctx.beginPath(); ctx.moveTo(xb, archY); ctx.lineTo(xb, yEnd); ctx.stroke(); ctx.setLineDash([]);
-    // 終点に矢じり（折り返した先を指す）。dir は左右どちら向きか。
-    const dir = Math.sign(xb - xa) || 1;
-    ctx.beginPath(); ctx.moveTo(xb, archY + 1 * d); ctx.lineTo(xb - dir * 11 * d, archY - 9 * d); ctx.lineTo(xb - dir * 2 * d, archY - 11 * d); ctx.closePath(); ctx.fill();
-    ctx.restore();
-    lateLabels.push([label, xm, archY - lift - 4 * d, col]);
-  };
+  // arch(): fa から fb への「折り返し」の弧の“仕様”を積むだけ。実際の描画は下部の仕上げでまとめて行う
+  //   （低い画面でラベルを下げるとき、同じぶん弧も低くできるよう描画を遅延させている）。
+  const arch = (fa, fb, lift, col, dash, yEnd, label) => { arcs.push({ fa, fb, lift, col, dash, yEnd, label }); };
   // tone
   // 信号成分を実線の矢印＋丸印で描く。
   arrow(ctx, fx(fs), base, toneTop, 3 * d, T.text, false, false, d);
@@ -167,8 +168,8 @@ function drawHow(){
     pill('IQ イメージ', fx(fimg) + side * 10 * d, base - ih + 9 * d, T.bad, side > 0 ? 'left' : 'right');
     arch(fs, fimg, Math.min(46 * d, Math.abs(fx(fimg) - fx(fs)) * 0.22), T.bad, false, base - ih - 2 * d, 'IQ 不平衡：' + loName + ' を軸に折り返し');
   } else {
-    // τ=0 ならイメージは生じない。
-    pill('τ = 0 なのでイメージなし', fx(fimg), base - 10 * d, T.text2, 'center');
+    // τ=0 ならイメージは生じない。イメージが出るはずの高さ（複製の矢印より上）に置き、「複製」ラベルと重ねない。
+    pill('τ = 0 なのでイメージなし', fx(fimg), base - th * 0.22 - 14 * d, T.text2, 'center');
   }
   // replica
   // 共役で作る「複製」の目標周波数 target: 方式B は f₀ を軸(=-fs)、提案D は LO を軸(=fimg)。
@@ -191,10 +192,35 @@ function drawHow(){
     const lift = howMode === 'B' ? Math.min(78 * d, span * 0.3) : Math.min(46 * d, span * 0.22) + 34 * d;
     arch(fs, target, lift, rc, true, base - rh - 2 * d, howMode === 'B' ? '再結合後の共役：f₀ を軸に折り返し' : 'ブランチ毎の共役：' + loName + ' を軸に折り返し');
   }
-  // 弧のラベルをまとめて描画。
-  for (const L of lateLabels) pill(L[0], L[1], L[2], L[3], 'center');
+  // 弧とそのラベルをまとめて描画（仕上げ）。
+  // drawArc(): 二次ベジェの山なりの弧＋その先端から対象の高さ(yEnd)まで降りる点線＋矢じり。lift が山の高さ。
+  const drawArc = (a, lift) => {
+    const xa = fx(a.fa), xb = fx(a.fb), xm = (xa + xb) / 2;
+    ctx.save(); ctx.strokeStyle = a.col; ctx.fillStyle = a.col; ctx.lineWidth = 2 * d; if (a.dash) ctx.setLineDash([6 * d, 4 * d]);
+    ctx.beginPath(); ctx.moveTo(xa, archY); ctx.quadraticCurveTo(xm, archY - 2 * lift, xb, archY); ctx.stroke();
+    ctx.setLineDash([2 * d, 4 * d]); ctx.lineWidth = 1.4 * d;
+    ctx.beginPath(); ctx.moveTo(xb, archY); ctx.lineTo(xb, a.yEnd); ctx.stroke(); ctx.setLineDash([]);
+    // 終点に矢じり（折り返した先を指す）。dir は左右どちら向きか。
+    const dir = Math.sign(xb - xa) || 1;
+    ctx.beginPath(); ctx.moveTo(xb, archY + 1 * d); ctx.lineTo(xb - dir * 11 * d, archY - 9 * d); ctx.lineTo(xb - dir * 2 * d, archY - 11 * d); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  };
+  // 画面が低いと弧のラベルが上端へ迫り、冒頭のヒント文や軸ラベル(LO₁/LO₂)と重なる。
+  // ラベル下端に下限を設け、ラベル同士も重ねない。下げたぶんだけ lift を縮めて弧も低くし、ラベルが常に弧の少し上に来るようにする。
+  arcs.sort((a, b) => b.lift - a.lift);        // 山の高いもの（＝上にくるラベル）から順に配置
+  const minLabelY = axisLabelY + pillH + 4 * d; // ラベル下端の下限（上端が軸ラベル帯の下へ収まる。行を下げたぶん追従）
+  let prevBottom = -1e9;
+  for (const a of arcs) {
+    let labelY = Math.max(archY - a.lift - 4 * d, minLabelY);
+    if (prevBottom > -1e8) labelY = Math.max(labelY, prevBottom + pillH + 3 * d);   // 直前のラベルと重ねない
+    prevBottom = labelY;
+    // ラベル位置に合わせて山を低くする（頂点がラベル下端のすぐ下に来る）。自然な高さは超えず、下限 10d。
+    const eff = Math.max(10 * d, Math.min(a.lift, archY - labelY - 4 * d));
+    drawArc(a, eff);
+    pill(a.label, (fx(a.fa) + fx(a.fb)) / 2, labelY, a.col, 'center');
+  }
   ctx.fillStyle = T.text2; ctx.font = font(400, 12); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  ctx.fillText('グラフに触れると信号成分の位置を動かせます', g.l, 6 * d);
+  ctx.fillText(hintTxt, g.l, 6 * d);
   // status
   // 図の下の説明文。方式Bは「打ち消せない」、提案Dは「打ち消せる」理由を周波数の数値付きで示す。
   const f1 = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(0);

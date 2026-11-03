@@ -31,8 +31,8 @@ let padDirty = true;
 function setTau(t1, t2, user){
   // 範囲を ±10 ps にクランプ。
   t1 = Math.max(-10, Math.min(10, t1)); t2 = Math.max(-10, Math.min(10, t2));
-  // 人が動かしたときは、競合する自動ゆらぎ/自動測定を止める。
-  if (user) { stopDrift(); if (sweep) stopSweep('操作したので測定を止めました．'); }
+  // 人が動かしたときは、競合する自動ゆらぎ/自動測定を止め、指ヒントも消す。
+  if (user) { stopDrift(); if (sweep) stopSweep('操作したので測定を止めました．'); dismissPadHint(); }
   // パッドに残す軌跡(trail)。前回位置から十分動いたときだけ点を足し、最大 60 点に制限。
   const lt = trail[trail.length - 1];
   if (!lt || Math.hypot(lt[0] - t1, lt[1] - t2) > 0.15) { trail.push([t1, t2]); if (trail.length > 60) trail.shift(); }
@@ -102,11 +102,17 @@ function driftStep(dt){
 
 /* ---------- idle attract ---------- */
 // lastAct=最後に操作した時刻。無操作が続くと自動デモを始めるための基準。
-let lastAct = performance.now(), idleDrift = false;
-// 操作があったことを記録する（放置ヒントを消し、画面スリープも抑止）。各UIから呼ばれる。
-function userAct(){ lastAct = performance.now(); $('#idleHint').classList.remove('on'); keepAwake(); }
-document.addEventListener('pointerdown', () => { lastAct = performance.now(); $('#idleHint').classList.remove('on'); keepAwake(); }, { passive: true });
+let lastAct = performance.now(), idleAttract = false;
+// 「指でドラッグして動かせます」の表示を一元管理：
+//   最初のヒント（手の絵が出ている間 = padHintShow）か、放置アトラクト中（idleAttract）に表示。
+//   → 最初から出て、パッド操作で手と同時に消える（dismissPadHint が呼ぶ）。
+function updateIdleHint(){ $('#idleHint').classList.toggle('on', padHintShow || idleAttract); }
+// 操作があったことを記録する（アトラクトを解除し、表示を更新、画面スリープも抑止）。各UIから呼ばれる。
+function userAct(){ lastAct = performance.now(); idleAttract = false; updateIdleHint(); keepAwake(); }
+document.addEventListener('pointerdown', () => { lastAct = performance.now(); idleAttract = false; updateIdleHint(); keepAwake(); }, { passive: true });
 // 2 秒ごとに点検: 60 秒以上無操作でデモ表示中なら、自動でゆらぎを始めてヒントを出す。
 setInterval(() => {
-  if (performance.now() - lastAct > 60000 && !drift && !sweep && currentView === 'demo') { startDrift(); $('#idleHint').classList.add('on'); }
+  if (performance.now() - lastAct > 60000 && !drift && !sweep && currentView === 'demo') { startDrift(); idleAttract = true; updateIdleHint(); }
 }, 2000);
+// 起動時：まだ操作されていないので、最初からヒントを表示（手の絵と一緒に出る）。
+updateIdleHint();

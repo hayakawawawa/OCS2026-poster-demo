@@ -195,7 +195,13 @@ details.blk[open] summary::before{ transform:rotate(45deg); }
 @media (max-width: 520px){
   .ttl h1{ font-size:16.5px; }             /* スマホでの基準サイズ（これを上限に JS の fitTitle が自動縮小して 1 行に収める） */
   .ttl p{ display:none; }                  /* 小さい画面ではサブタイトルを隠してヘッダーを低くする */
-  .tools{ display:none; }                  /* スマホではシミュレーション／外観／全画面を非表示（外観は OS のダーク設定に自動追従する） */
+  /* スマホでも「外観（自動/ダーク/ライト）」トグルだけはタブ行の右端に出す。
+     シミュレーションのバッジと全画面ボタンは引き続き隠す。既存の #themeBtn をそのまま使う */
+  .tools{ display:flex; margin-left:auto; }
+  .tools .sim-badge, .tools #fsBtn{ display:none; }
+  #themeBtn{ display:inline-flex; align-items:center; gap:6px; padding:5px 10px; font-size:12px; border-radius:8px; }
+  /* 明暗を表す半月アイコン（currentColor でテーマ色に追従） */
+  #themeBtn::before{ content:""; width:13px; height:13px; flex:none; border-radius:50%; border:1.5px solid currentColor; background:linear-gradient(90deg,currentColor 50%,transparent 50%); }
   .tabs{ padding:2px; }                     /* デモ／しくみのタブを少し低くする */
   .tabs button{ padding:5px 15px; font-size:13px; }
   .screens{ gap:6px; height:var(--screens-h,56vh); height:var(--screens-h,56dvh); } /* 主役の4画面を大きめに。高さは JS(fitFirstScreen) が1画面に収まるよう必要時だけ上書き */
@@ -241,6 +247,109 @@ details.blk[open] summary::before{ transform:rotate(45deg); }
   .btn{ min-height:36px; padding:8px 9px; }
   .blk{ padding:10px 12px 11px; }
 }
+/* ============================================================
+   タブレット縦向き（十分な幅がある縦画面）専用レイアウト。
+   この幅では既定で1カラムに畳まれ、操作パッドを見るにはスクロールが要る。そこで
+   デスクトップと同じ「左=4画面＋SNR / 右=IQスキュー操作」の2ペインに戻し、
+   サブタイトルとツール（シミュレーション/外観/全画面）を省いて、
+   コンスタレーションと操作パッドを1画面に収める。
+   条件: 縦向き かつ 幅700〜1100px（スマホ ≤520px と 横向きPC は対象外）。 */
+@media (orientation: portrait) and (min-width: 700px) and (max-width: 1100px){
+  /* ヘッダーを1行に：サブタイトルとツールを省く */
+  .top{ flex-wrap:nowrap; }
+  .ttl{ flex:1; flex-basis:auto; min-width:0; }
+  .ttl p{ display:none; }
+  .tools{ display:none; }
+
+  /* demo を2ペインに戻す（1カラム化を打ち消す）。左=4画面+SNR / 右=操作パネル。
+     高さはコンテンツ基準（align-content:start で行を上詰めし、カードが縦に伸びて
+     空白が出るのを防ぐ）。縦に余裕のあるタブレットでも等倍の正方コンスタに追従する */
+  .demo{ grid-template-columns:minmax(0,1fr) clamp(300px,34vw,380px); grid-template-rows:58vh 128px; align-content:start; align-items:start; gap:10px; height:auto; }
+  .screens{ grid-column:1; grid-row:1; order:0; height:58vh; min-height:0; }
+  .trace{ grid-column:1; grid-row:2; order:0; height:128px; }
+  .panel{ grid-column:2; grid-row:1 / span 2; order:0; overflow:visible; }
+
+  /* コンスタレーションのカードは幅が狭い(≒240px)ので、大きな BER と手法名が横並びで
+     競合して名前が縦に細切れになる。手法名を1行目、BER＋実効SNRを2行目に積んで回避し、
+     サブラベルは省いて盤面の高さを確保する */
+  .scope-h{ flex-wrap:wrap; column-gap:8px; row-gap:1px; align-items:center; }
+  .nm{ order:1; }
+  .nm b{ font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .nm small{ display:none; }
+  .ber{ order:2; flex-basis:100%; display:flex; gap:10px; align-items:baseline; text-align:left; margin-left:0; }
+  .ber .v{ font-size:16px; }
+  .ber .s{ font-size:11px; }
+
+  /* パッドはコンスタレーション幅（≒33vw）を超えないよう上限を設け、左右のバランスを保つ */
+  #pad{ width:min(100%, calc(33vw - 24px), 300px); }
+
+  /* how ビューも2ペインを維持（右の解説は内部スクロール） */
+  .how{ grid-template-columns:minmax(0,1fr) clamp(300px,34vw,380px); grid-template-rows:minmax(0,1fr); }
+  .how-side{ overflow:auto; }
+  .howcv{ min-height:0; }
+}
+/* ============================================================
+   スマホ横向き（高さの低い画面）専用レイアウト。
+   デスクトップは元々「左=4画面＋SNR / 右=操作」の2ペインだが、(max-width:900px) が
+   1カラムに畳むため横向きでは縦長・スクロール地獄になる。そこで横向きスマホでは
+   2ペインを復活させ、SNRトレース等を省いて1画面に収める（縦向き≤520pxとは別系統）。
+   条件: 横向き かつ 高さ520px以下＝スマホ横（PCの通常ウィンドウは高さが高いので対象外）。 */
+@media (orientation: landscape) and (max-height: 520px){
+  /* ビュー高を画面に固定し、ページ全体ではなく右ペイン内でスクロールさせる */
+  html,body{ height:100%; }
+  .app{ height:100%; gap:6px; padding-top:6px; padding-bottom:8px; }
+
+  /* ヘッダーを1行に圧縮（サブタイトルは非表示）。外観トグルだけはタブの横に残す */
+  .top{ flex-wrap:nowrap; min-height:0; gap:12px; }
+  .ttl{ flex:1; flex-basis:auto; min-width:0; }
+  .ttl h1{ font-size:15px; }
+  .ttl p{ display:none; }
+  .tabs button{ padding:5px 14px; font-size:13px; }
+  /* 外観（自動/ダーク/ライト）トグルだけ表示（タブの横）。シミュレーションのバッジと全画面は隠す */
+  .tools{ display:flex; }
+  .tools .sim-badge, .tools #fsBtn{ display:none; }
+  #themeBtn{ display:inline-flex; align-items:center; gap:6px; padding:5px 10px; font-size:12px; border-radius:8px; }
+  #themeBtn::before{ content:""; width:13px; height:13px; flex:none; border-radius:50%; border:1.5px solid currentColor; background:linear-gradient(90deg,currentColor 50%,transparent 50%); }
+
+  /* demo を2ペイン・1行に戻す。SNRトレースは省く */
+  .demo{ grid-template-columns:minmax(0,1fr) clamp(224px,34vw,300px); grid-template-rows:minmax(0,1fr); gap:8px; height:auto; }
+  .screens{ grid-column:1; grid-row:1; order:0; height:auto; min-height:0; gap:8px; }
+  .panel{ grid-column:2; grid-row:1; order:0; overflow:auto; }
+  .trace{ display:none; }
+
+  /* コンスタレーション：余白・文字を詰めて盤面を広く。SNR行・HD-FEC・補足は省く */
+  .scope{ padding:6px 9px 7px; }
+  .meter{ display:none; }
+  .ber .s{ display:none; }
+  .nm small{ display:none; }
+  .legend{ display:none; }
+  /* カードが狭いので手法名を1行目／BERを2行目に積んで、名前の縦折れを防ぐ */
+  .scope-h{ flex-wrap:wrap; column-gap:8px; row-gap:1px; align-items:center; }
+  .nm{ order:1; }
+  .nm b{ font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ber{ order:2; flex-basis:100%; text-align:left; margin-left:0; }
+  .ber .v{ font-size:15px; }
+  /* 右ペインが狭いと「IQ スキュー」等の見出しが2行に折れるので1行に固定し、idleヒントは省く */
+  .blk-h h2{ white-space:nowrap; }
+  .hint{ display:none; }
+
+  /* IQスキュー：配置はデスクトップと同じ縦積みのまま、パッドだけ画面高に追従して縮小 */
+  #pad{ width:min(100%, 40vh, 210px); }
+  .btn{ min-height:36px; padding:8px 10px; }
+
+  /* how ビューも2ペインに戻し、右の解説は内部スクロールで読めるようにする */
+  .how{ grid-template-columns:minmax(0,1fr) clamp(240px,34vw,320px); grid-template-rows:minmax(0,1fr); }
+  .how-side{ overflow:auto; }
+  /* 横は高さが足りない。無理に1画面へ詰めると図が潰れ・スライダーも操作しにくいので、
+     左ペインは内部スクロールにして、図は見やすい固定高・スライダーはフル幅、説明文はスクロールで読む。
+     （狭幅クエリの .howcv{flex:none;height:52vh} はここで上書き。flex:none のまま height:auto だと図が潰れて消える点に注意） */
+  .how-main{ padding:8px 12px; overflow-y:auto; }
+  .how-top{ gap:6px 14px; }
+  .how-top .sl{ flex-basis:100%; min-width:0; }   /* スライダーは必ず次行・フル幅＝操作しやすく */
+  .howcv{ flex:none; min-height:0; height:clamp(300px, 78vh, 360px); margin-top:8px; }
+  .how-status{ font-size:12.5px; line-height:1.55; min-height:0; margin:9px 0 2px; }
+}
+
 @media (prefers-reduced-motion: reduce){
   *{ transition:none !important; }
 }

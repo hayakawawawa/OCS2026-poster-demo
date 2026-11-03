@@ -23,9 +23,9 @@ readTokens();
 /* ---------- theme ---------- */
 // テーマ切替：auto（OS追従）/ dark / light を順に回す。<html data-theme="..."> を付け外しして CSS 側を切り替える。
 const THEMES = ['auto','dark','light'], THEME_L = {auto:'自動', dark:'ダーク', light:'ライト'};
-// 前回選んだテーマを localStorage から復元（無ければ auto）。
-let theme = 'auto';
-try { theme = localStorage.getItem('wl-demo-theme') || 'auto'; } catch(e){}
+// 前回選んだテーマを localStorage から復元（無ければ既定はダーク）。
+let theme = 'dark';
+try { theme = localStorage.getItem('wl-demo-theme') || 'dark'; } catch(e){}
 // applyTheme: 現在の theme を DOM に反映し、ボタン表示を更新。色が変わるので T を読み直して全再描画する。
 function applyTheme(){
   // auto のときは data-theme 属性を外し、CSS の @media(prefers-color-scheme) に任せる。
