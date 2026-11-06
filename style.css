@@ -76,7 +76,7 @@ button,input{ font:inherit; color:inherit; }
 .panel{ grid-column:2; grid-row:1 / span 2; overflow:auto; min-height:0; display:flex; flex-direction:column; gap:10px; scrollbar-width:thin; }
 
 .card{ background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); }
-.scope{ display:flex; flex-direction:column; padding:9px 11px 10px; min-height:0; min-width:0; }
+.scope{ display:flex; flex-direction:column; padding:9px 11px 10px; min-height:0; min-width:0; container-type:inline-size; } /* カード幅を @container で参照できるようにする（ヘッダーの動的な組み替え用） */
 .scope.prop{ border-color:var(--acc); box-shadow:0 0 0 1px var(--acc), var(--shadow); }
 .scope-h{ display:flex; align-items:flex-start; gap:9px; }
 .tag{ flex:none; width:26px; height:26px; border-radius:7px; display:grid; place-items:center; font-weight:700; font-size:14px; color:var(--surface); background:var(--c); }
@@ -95,6 +95,20 @@ button,input{ font:inherit; color:inherit; }
 .meter span{ position:absolute; top:-16px; font-size:10px; color:var(--text-2); transform:translateX(-50%); white-space:nowrap; }
 .screen{ position:relative; flex:1; min-height:0; }
 .screen canvas{ position:absolute; border-radius:8px; }
+
+/* カード自体の幅が狭いとき（画面幅ではなくカード幅で判断）、手法名が1文字ずつ縦積みになって
+   コンスタレーションが潰れるのを防ぐ。手法名を1行目（タグの隣）、BER＋実効SNRを2行目に積む。
+   既存のブレークポイント(≤520px / タブレット縦)で埋めきれない隙間（例：縦向き520〜700px）でも破綻しない。
+   ※ ≤520px・タブレット縦の個別指定は後方にあるため、その範囲ではそちらの微調整が優先される。 */
+@container (max-width: 350px){
+  .scope-h{ flex-wrap:wrap; column-gap:8px; row-gap:1px; align-items:center; }
+  .nm{ order:1; }                                      /* 手法名：タグの隣（1行目） */
+  .nm b{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } /* はみ出しても縦積みにせず…で省略 */
+  .nm small{ display:none; }                           /* 狭いカードでは補足説明を省く */
+  .ber{ order:2; flex-basis:100%; display:flex; flex-wrap:wrap; gap:1px 7px; align-items:baseline; text-align:left; margin-left:0; } /* BER：2行目 */
+  .ber .v{ font-size:16px; }
+  .ber .s{ font-size:10px; }                           /* 狭いカードでも実効SNRは表示（BERと同じ2行目に、少し小さく） */
+}
 
 /* ---------- trace ---------- */
 .trace{ display:flex; flex-direction:column; padding:8px 12px 8px; min-height:0; }
@@ -247,6 +261,12 @@ details.blk[open] summary::before{ transform:rotate(45deg); }
   .btn{ min-height:36px; padding:8px 9px; }
   .blk{ padding:10px 12px 11px; }
 }
+/* スマホ（縦向き・幅≤699px）では、下の「実効 SNR の推移」グラフと「BER マップ」を省く。
+   コンスタレーション内の実効SNR表示は残す。タブレット縦向き(≥700px)とPCでは従来どおり表示。 */
+@media (orientation: portrait) and (max-width: 699px){
+  .trace{ display:none; }        /* 「実効 SNR の推移」グラフ */
+  #mapBlk{ display:none; }        /* 「BER マップ」セクション */
+}
 /* ============================================================
    タブレット縦向き（十分な幅がある縦画面）専用レイアウト。
    この幅では既定で1カラムに畳まれ、操作パッドを見るにはスクロールが要る。そこで
@@ -276,9 +296,9 @@ details.blk[open] summary::before{ transform:rotate(45deg); }
   .nm{ order:1; }
   .nm b{ font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .nm small{ display:none; }
-  .ber{ order:2; flex-basis:100%; display:flex; gap:10px; align-items:baseline; text-align:left; margin-left:0; }
+  .ber{ order:2; flex-basis:100%; display:flex; flex-wrap:wrap; gap:1px 7px; align-items:baseline; text-align:left; margin-left:0; min-width:0; } /* BERと実効SNRを横並び。入りきらない時だけ実効SNRが次行へ回り、右端のはみ出し（dB 欠け）を防ぐ */
   .ber .v{ font-size:16px; }
-  .ber .s{ font-size:11px; }
+  .ber .s{ font-size:10px; } /* 実効SNRを少し小さくして BER と同じ行に収めやすくする */
 
   /* パッドはコンスタレーション幅（≒33vw）を超えないよう上限を設け、左右のバランスを保つ */
   #pad{ width:min(100%, calc(33vw - 24px), 300px); }

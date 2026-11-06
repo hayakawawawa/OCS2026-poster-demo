@@ -91,10 +91,10 @@ function drawPad(){
     // 手：指先 tx,ty を起点に右下（45°）へ伸ばし、こぶし〜手首〜前腕はパッド外へ抜ける。
     ctx.save(); ctx.translate(tx, ty); ctx.rotate(-Math.PI / 4); ctx.scale(k, k);
     const hand = new Path2D();
-    hand.roundRect(-5.5, 0, 11, 52, 5.5);                // 人差し指（短め）
-    hand.roundRect(-21, 42, 42, 50, 15);                 // こぶし（手の甲）＝いちばん太い部分
-    hand.roundRect(-31, 50, 16, 15, 7.5);                // 親指
-    hand.roundRect(-13, 82, 26, 64, 12);                 // 手首（短め・パッドの外へ）
+    hand.roundRect(-14.5, 0, 11, 42, 5.5);               // 人差し指（短め・親指寄り）
+    hand.roundRect(-21, 32, 42, 50, 15);                 // こぶし（手の甲）＝いちばん太い部分
+    hand.roundRect(-31, 40, 16, 15, 7.5);                // 親指
+    hand.roundRect(-13, 72, 26, 64, 12);                 // 手首（短め・パッドの外へ）
     ctx.globalAlpha = a * 0.35; ctx.lineWidth = 7; ctx.strokeStyle = T.surface2; ctx.stroke(hand); // 格子から浮かせる下地
     ctx.globalAlpha = a; ctx.fillStyle = T.text; ctx.fill(hand);
     ctx.restore(); ctx.globalAlpha = 1;
